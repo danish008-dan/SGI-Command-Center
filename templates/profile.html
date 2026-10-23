@@ -1,0 +1,274 @@
+<!-- templates/profile.html -->
+{% extends layout %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Welcome Banner -->
+    <div class="card shadow-sm mb-4 border-0 rounded-4 overflow-hidden" data-aos="fade-down">
+        <div class="card-body p-4" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+            <div class="d-flex align-items-center text-white">
+                <img id="bannerImg" src="/static/images/default.png" alt="Profile" class="rounded-circle border border-2 border-white shadow" width="80" height="80" style="object-fit: cover;">
+                <div class="ms-3">
+                    <h4 class="mb-0" id="bannerName">User Name</h4>
+                    <span class="badge bg-light text-primary" id="bannerRole">Role</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+
+        <!-- Left Column: Photo & Stats -->
+        <div class="col-lg-4" data-aos="fade-right">
+            <div class="card shadow-sm rounded-3 mb-3">
+                <div class="card-header bg-white py-3"><h6 class="mb-0"><i class="bi bi-person-circle me-2"></i>Profile Picture</h6></div>
+                <div class="card-body p-3 text-center">
+                    <img id="previewImg" src="/static/images/default.png" alt="Profile" class="rounded-circle border shadow mb-3" width="120" height="120" style="object-fit: cover;">
+                    <div class="alert alert-danger d-none" id="uploadAlert" role="alert" style="font-size: 12px;"></div>
+                    <form id="profileForm" class="w-100">
+                        <div class="mb-2">
+                            <input class="form-control form-control-sm" type="file" id="fileInput" accept="image/png, image/jpeg" required>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100" id="uploadBtn">
+                            <i class="bi bi-cloud-arrow-up me-1"></i> Upload Image
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Profile Completion Card -->
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header bg-white py-3"><h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Profile Completion</h6></div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Completeness</span>
+                        <span id="completionPct">0%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div id="completionBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">Fill in all fields to reach 100% profile completion.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Details Form -->
+        <div class="col-lg-8" data-aos="fade-left">
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header bg-white py-3"><h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Personal Information</h6></div>
+                <div class="card-body p-3">
+                    <div class="alert alert-success d-none" id="updateAlert" role="alert" style="font-size: 13px;"></div>
+
+                    <form id="detailsForm">
+                        <h6 class="text-muted mb-2 border-bottom pb-1 small">Basic Details</h6>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small mb-1">Full Name</label>
+                                <input type="text" class="form-control form-control-sm" name="full_name" id="full_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small mb-1">Email (Cannot be changed)</label>
+                                <input type="email" class="form-control form-control-sm bg-light" id="email" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small mb-1">Mobile Number</label>
+                                <input type="text" class="form-control form-control-sm" name="mobile" id="mobile">
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Role-Based Fields -->
+                        <div id="roleFields"></div>
+
+                    </form>
+                </div>
+                <div class="card-footer bg-white py-2 text-end">
+                    <button type="submit" form="detailsForm" class="btn btn-sm btn-success" id="saveBtn">
+                        <i class="bi bi-check-circle me-1"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+// 1. Load Profile Details
+async function loadProfile() {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/login"; return; }
+
+    try {
+        const res = await fetch("/api/profile/details", { headers: { "Authorization": "Bearer " + token } });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+
+        document.getElementById("full_name").value = data.full_name || "";
+        document.getElementById("email").value = data.email || "";
+        document.getElementById("mobile").value = data.mobile || "";
+
+        // Update Banner
+        document.getElementById("bannerName").textContent = data.full_name || "User";
+        document.getElementById("bannerRole").textContent = data.role || "User";
+
+        const imgUrl = data.profile_image ? "/static/images/" + data.profile_image + "?t=" + new Date().getTime() : "/static/images/default.png";
+        document.getElementById("previewImg").src = imgUrl;
+        document.getElementById("bannerImg").src = imgUrl;
+
+        const roleFieldsDiv = document.getElementById("roleFields");
+        let html = "";
+
+        if (data.role === "Student") {
+            html += `<h6 class="text-muted mb-2 border-bottom pb-1 small mt-3">Academic Details</h6><div class="row g-2 mb-3">`;
+            html += `<div class="col-md-4"><label class="form-label small mb-1">Semester</label><input type="number" class="form-control form-control-sm" name="semester" value="${data.semester || ''}"></div>`;
+            html += `<div class="col-md-4"><label class="form-label small mb-1">Section</label><input type="text" class="form-control form-control-sm" name="section" value="${data.section || ''}"></div>`;
+            html += `<div class="col-md-4"><label class="form-label small mb-1">CGPA</label><input type="number" step="0.01" class="form-control form-control-sm" name="cgpa" value="${data.cgpa || ''}"></div>`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Skills</label><input type="text" class="form-control form-control-sm" name="skills" value="${data.skills || ''}"></div>`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Interests</label><input type="text" class="form-control form-control-sm" name="interests" value="${data.interests || ''}"></div>`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Preferred Domain</label><input type="text" class="form-control form-control-sm" name="preferred_domain" value="${data.preferred_domain || ''}"></div>`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Dream Salary</label><input type="number" class="form-control form-control-sm" name="dream_salary" value="${data.dream_salary || ''}"></div>`;
+            html += `</div>`;
+        } else if (data.role === "Teacher" || data.role === "HOD") {
+            html += `<h6 class="text-muted mb-2 border-bottom pb-1 small mt-3">Professional Details</h6><div class="row g-2 mb-3">`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Designation</label><input type="text" class="form-control form-control-sm" name="designation" value="${data.designation || ''}"></div>`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Qualification</label><input type="text" class="form-control form-control-sm" name="qualification" value="${data.qualification || ''}"></div>`;
+            html += `<div class="col-md-6"><label class="form-label small mb-1">Experience (Years)</label><input type="number" class="form-control form-control-sm" name="experience" value="${data.experience || ''}"></div>`;
+            html += `</div>`;
+        } else {
+            html += `<div class="alert alert-info small mt-2">Admins can only change basic details.</div>`;
+        }
+
+        roleFieldsDiv.innerHTML = html;
+        calculateCompletion(data);
+
+    } catch (error) {
+        document.getElementById("roleFields").innerHTML = `<div class="alert alert-danger">Error loading profile data.</div>`;
+    }
+}
+
+// Helper: Calculate Profile Completion
+function calculateCompletion(data) {
+    const fields = ['full_name', 'mobile', 'semester', 'section', 'cgpa', 'skills', 'interests', 'preferred_domain', 'dream_salary', 'designation', 'qualification', 'experience'];
+    let filled = 0;
+    let total = 0;
+
+    fields.forEach(f => {
+        if (data.role === 'Student' && ['semester', 'section', 'cgpa', 'skills', 'interests', 'preferred_domain', 'dream_salary'].includes(f)) {
+            total++;
+            if (data[f]) filled++;
+        } else if ((data.role === 'Teacher' || data.role === 'HOD') && ['designation', 'qualification', 'experience'].includes(f)) {
+            total++;
+            if (data[f]) filled++;
+        }
+        if (['full_name', 'mobile'].includes(f)) {
+            total++;
+            if (data[f]) filled++;
+        }
+    });
+
+    // Add profile image to total
+    total++;
+    if (data.profile_image) filled++;
+
+    const pct = Math.round((filled / total) * 100);
+    document.getElementById("completionPct").textContent = pct + "%";
+    document.getElementById("completionBar").style.width = pct + "%";
+    document.getElementById("completionBar").setAttribute("aria-valuenow", pct);
+}
+
+// 2. Handle Details Form Submit
+document.getElementById("detailsForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("saveBtn");
+    const alertBox = document.getElementById("updateAlert");
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    btn.disabled = true;
+
+    const formData = new FormData(this);
+
+    try {
+        const token = localStorage.getItem("access_token");
+        const res = await fetch("/api/profile/update", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token },
+            body: formData
+        });
+        const data = await res.json();
+
+        alertBox.className = "alert alert-success";
+        alertBox.textContent = data.message;
+        alertBox.classList.remove("d-none");
+
+        const navName = document.getElementById("navUserName");
+        if (navName) navName.textContent = "Welcome, " + formData.get("full_name");
+
+        // Recalculate completion after save
+        loadProfile();
+
+    } catch (error) {
+        alertBox.className = "alert alert-danger";
+        alertBox.textContent = "Network error.";
+        alertBox.classList.remove("d-none");
+    } finally {
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Save Changes';
+        btn.disabled = false;
+    }
+});
+
+// 3. Handle Image Upload
+document.getElementById("profileForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById("fileInput");
+    const alertBox = document.getElementById("uploadAlert");
+    const btn = document.getElementById("uploadBtn");
+
+    if (!fileInput.files[0]) return;
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Uploading...';
+    btn.disabled = true;
+
+    try {
+        const token = localStorage.getItem("access_token");
+        const res = await fetch("/api/profile/upload", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token },
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            const imgUrl = "/static/images/" + data.filename + "?t=" + new Date().getTime();
+            document.getElementById("previewImg").src = imgUrl;
+            document.getElementById("bannerImg").src = imgUrl;
+            const navImg = document.getElementById("navUserImg");
+            if (navImg) navImg.src = imgUrl;
+            alertBox.className = "alert alert-success";
+            alertBox.textContent = data.message;
+        } else {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = data.message;
+        }
+        alertBox.classList.remove("d-none");
+    } catch (error) {
+        alertBox.className = "alert alert-danger";
+        alertBox.textContent = "Network error.";
+        alertBox.classList.remove("d-none");
+    } finally {
+        btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Upload Image';
+        btn.disabled = false;
+    }
+});
+
+// Initialize
+loadProfile();
+</script>
+{% endblock %}

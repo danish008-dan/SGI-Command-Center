@@ -1,0 +1,64 @@
+<!-- templates/hod/timetable_conflicts.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Timetable Conflicts{% endblock %}
+{% block page_title %}Timetable Conflict Detection{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Scheduling Conflicts</h5>
+        </div>
+        <div class="card-body" id="conflictsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadConflicts() {
+    const body = document.getElementById("conflictsBody");
+    try {
+        const res = await fetch("/hod/api/timetable/conflicts", { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+
+        if(data.conflicts.length === 0) {
+            body.innerHTML = '<div class="alert alert-success text-center"><i class="bi bi-check-circle-fill"></i> No timetable conflicts detected. Excellent!</div>';
+            return;
+        }
+
+        let html = `<div class="alert alert-warning"><b><i class="bi bi-exclamation-triangle-fill"></i> ${data.conflicts.length} Conflicts Detected:</b> Please resolve these with the Admin/Examination cell.</div>`;
+
+        html += `<div class="table-responsive"><table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Day</th><th>Time</th><th>Conflict Type</th><th>Details</th></tr></thead>
+            <tbody>`;
+
+        data.conflicts.forEach(c => {
+            const conflictType = c.teacher_name ? `Faculty Double-Booked (${c.teacher_name})` : `Room Double-Booked (${c.room1})`;
+            html += `<tr>
+                <td><b>${c.day_of_week}</b></td>
+                <td>${c.start_time} - ${c.end_time}</td>
+                <td><span class="badge bg-danger">${conflictType}</span></td>
+                <td>
+                    <small>
+                        <b>Entry 1:</b> ${c.sub1_name} (Sem ${c.sem1}, Sec ${c.sec1}) in ${c.room1}<br>
+                        <b>Entry 2:</b> ${c.sub2_name} (Sem ${c.sem2}, Sec ${c.sec2}) in ${c.room2}
+                    </small>
+                </td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        body.innerHTML = html;
+    } catch(err) {
+        body.innerHTML = '<div class="alert alert-danger">Failed to load conflict data.</div>';
+    }
+}
+loadConflicts();
+</script>
+{% endblock %}

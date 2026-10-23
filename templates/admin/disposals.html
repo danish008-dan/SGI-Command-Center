@@ -1,0 +1,61 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Asset Disposals{% endblock %}
+{% block page_title %}Asset Disposal & Write-off Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Disposal Requests</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Asset</th><th>Reason</th><th>Requester</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for d in requests %}
+                        <tr>
+                            <td>{{ d.asset_code }} <small class="text-muted">({{ d.asset_name }})</small></td>
+                            <td>{{ d.reason }}</td>
+                            <td>{{ d.requester_name }}</td>
+                            <td><span class="badge bg-{% if d.status == 'Approved' %}success{% elif d.status == 'Rejected' %}danger{% else %}warning{% endif %}">{{ d.status }}</span></td>
+                            <td>
+                                {% if d.status == 'Pending' %}
+                                <button class="btn btn-sm btn-success approve-disp-btn" data-id="{{ d.disposal_id }}">Approve</button>
+                                <button class="btn btn-sm btn-danger reject-disp-btn" data-id="{{ d.disposal_id }}">Reject</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No disposal requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function handleDisposal(id, action) {
+    if(!confirm(`Are you sure you want to ${action} this disposal?`)) return;
+    const formData = new URLSearchParams();
+    formData.append("disposal_id", id);
+    formData.append("action", action);
+    
+    const res = await fetch("/admin/api/disposals/process", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+}
+
+document.querySelectorAll('.approve-disp-btn').forEach(btn => {
+    btn.addEventListener('click', function() { handleDisposal(this.dataset.id, 'Approved'); });
+});
+document.querySelectorAll('.reject-disp-btn').forEach(btn => {
+    btn.addEventListener('click', function() { handleDisposal(this.dataset.id, 'Rejected'); });
+});
+</script>
+{% endblock %}

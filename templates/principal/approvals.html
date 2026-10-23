@@ -1,0 +1,236 @@
+<!-- templates/principal/approvals.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}Approval Center{% endblock %}
+{% block page_title %}Unified Approval Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <ul class="nav nav-pills mb-4" id="approvalTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#results" type="button" role="tab">
+                Result Approvals <span id="resCount" class="badge bg-danger ms-1">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#concessions" type="button" role="tab">
+                Fee Concessions <span id="conCount" class="badge bg-danger ms-1">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#notices" type="button" role="tab">
+                Notice Approvals <span id="notCount" class="badge bg-danger ms-1">0</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="approvalTabsContent">
+
+        <!-- Results Tab -->
+        <div class="tab-pane fade show active" id="results" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="resultsTable">
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Concessions Tab -->
+        <div class="tab-pane fade" id="concessions" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="concessionsTable">
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notices Tab -->
+        <div class="tab-pane fade" id="notices" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="noticesTable">
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Provide Rejection Reason</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="rejectType">
+                <input type="hidden" id="rejectTarget">
+                <div class="mb-3">
+                    <label class="form-label">Reason / Remarks</label>
+                    <textarea class="form-control" id="rejectReason" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="submitReject()">Confirm Reject</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadApprovals() {
+    const token = getToken();
+    const resTable = document.getElementById("resultsTable");
+    const conTable = document.getElementById("concessionsTable");
+    const notTable = document.getElementById("noticesTable");
+
+    // Reset to loading state
+    resTable.innerHTML = `<div class="text-center py-5 text-muted"><div class="spinner-border"></div></div>`;
+    conTable.innerHTML = `<div class="text-center py-5 text-muted"><div class="spinner-border"></div></div>`;
+    notTable.innerHTML = `<div class="text-center py-5 text-muted"><div class="spinner-border"></div></div>`;
+
+    try {
+        const res = await fetch("/principal/api/approvals", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || "Failed to fetch approvals");
+        }
+
+        const data = await res.json();
+
+        // 1. Process Results (Grouped manually in JS since backend returns flat list)
+        let groupedResults = {};
+        let totalRes = 0;
+        data.results.forEach(r => {
+            if (!groupedResults[r.semester]) groupedResults[r.semester] = [];
+            groupedResults[r.semester].push(r);
+            totalRes++;
+        });
+
+        document.getElementById("resCount").innerText = totalRes;
+
+        let resHtml = '<p class="text-muted">No pending results.</p>';
+        if (totalRes > 0) {
+            resHtml = `<table class="table table-hover"><thead><tr><th>Semester</th><th class="text-center">Pending Students</th><th class="text-end">Action</th></tr></thead><tbody>`;
+            for (const [sem, students] of Object.entries(groupedResults)) {
+                resHtml += `<tr><td><b>Semester ${sem}</b></td><td class="text-center">${students.length}</td><td class="text-end">
+                    <button class="btn btn-sm btn-success" onclick="processApproval('result', '${sem}', 'Approved')">Approve All</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal('result', '${sem}')">Reject</button>
+                </td></tr>`;
+            }
+            resHtml += '</tbody></table>';
+        }
+        resTable.innerHTML = resHtml;
+
+        // 2. Process Concessions
+        document.getElementById("conCount").innerText = data.concessions.length;
+        let conHtml = '<p class="text-muted">No pending fee concessions.</p>';
+        if (data.concessions.length > 0) {
+            conHtml = `<table class="table table-hover"><thead><tr><th>Student</th><th>Amount</th><th>Reason</th><th class="text-end">Action</th></tr></thead><tbody>`;
+            data.concessions.forEach(c => {
+                conHtml += `<tr><td>${c.student_name}<br><small class="text-muted">${c.enrollment_no}</small></td><td>₹${c.amount}</td><td>${c.reason}</td><td class="text-end">
+                    <button class="btn btn-sm btn-success" onclick="processApproval('concession', '${c.request_id}', 'Approved')">Approve</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal('concession', '${c.request_id}')">Reject</button>
+                </td></tr>`;
+            });
+            conHtml += '</tbody></table>';
+        }
+        conTable.innerHTML = conHtml;
+
+        // 3. Process Notices
+        document.getElementById("notCount").innerText = data.notices.length;
+        let notHtml = '<p class="text-muted">No pending notices.</p>';
+        if (data.notices.length > 0) {
+            notHtml = `<table class="table table-hover"><thead><tr><th>Title</th><th>Category</th><th>Posted By</th><th class="text-end">Action</th></tr></thead><tbody>`;
+            data.notices.forEach(n => {
+                notHtml += `<tr><td>${n.title}</td><td>${n.category}</td><td>${n.creator_name}</td><td class="text-end">
+                    <button class="btn btn-sm btn-success" onclick="processApproval('notice', '${n.notice_id}', 'Approved')">Approve</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="openRejectModal('notice', '${n.notice_id}')">Reject</button>
+                </td></tr>`;
+            });
+            notHtml += '</tbody></table>';
+        }
+        notTable.innerHTML = notHtml;
+
+    } catch (error) {
+        console.error("Error loading approvals:", error);
+        resTable.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        conTable.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        notTable.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+}
+
+async function processApproval(type, target_id, action, reason = null) {
+    const token = getToken();
+    const formData = new URLSearchParams();
+    formData.append("type", type);
+    formData.append("target_id", target_id);
+    formData.append("action", action);
+    if(reason) formData.append("reason", reason);
+
+    try {
+        const res = await fetch("/principal/api/approvals/process", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token, "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if(res.ok && data.success) {
+            alert(data.message);
+            loadApprovals(); // Refresh the tables
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (error) {
+        alert("Network error processing approval: " + error.message);
+    }
+}
+
+function openRejectModal(type, target_id) {
+    document.getElementById("rejectType").value = type;
+    document.getElementById("rejectTarget").value = target_id;
+    document.getElementById("rejectReason").value = "";
+    new bootstrap.Modal(document.getElementById('rejectModal')).show();
+}
+
+function submitReject() {
+    const type = document.getElementById("rejectType").value;
+    const target_id = document.getElementById("rejectTarget").value;
+    const reason = document.getElementById("rejectReason").value;
+
+    if(!reason) { alert("Reason is required for rejection."); return; }
+
+    new bootstrap.Modal(document.getElementById('rejectModal')).hide();
+    processApproval(type, target_id, "Rejected", reason);
+}
+
+// Initial load
+loadApprovals();
+</script>
+{% endblock %}

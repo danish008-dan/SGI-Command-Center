@@ -1,0 +1,92 @@
+<!-- templates/teacher/syllabus.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Syllabus Tracker{% endblock %}
+{% block page_title %}Syllabus Coverage{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Add Syllabus Unit</h5></div>
+        <div class="card-body">
+            <form id="createSyllabusForm" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small">Subject</label>
+                    <select id="subjectSelect" class="form-select form-select-sm" required></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Section</label>
+                    <input type="text" class="form-control form-control-sm" name="section" placeholder="e.g. A" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Unit Name</label>
+                    <input type="text" class="form-control form-control-sm" name="unit_name" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Add Unit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Coverage Progress</h5></div>
+        <div class="card-body" id="syllabusBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => select.innerHTML += `<option value="${s.subject_id}">${s.subject_name}</option>`);
+}
+
+async function loadSyllabus() {
+    const res = await fetch("/teacher/api/syllabus", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("syllabusBody");
+
+    if(data.topics.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-4">No syllabus units added.</p>';
+        return;
+    }
+
+    let completed = data.topics.filter(t => t.status == 'Completed').length;
+    let total = data.topics.length;
+    let pct = total > 0 ? Math.round((completed/total)*100) : 0;
+
+    let html = `<div class="mb-4">
+        <label class="form-label">Overall Coverage (${pct}%)</label>
+        <div class="progress" style="height: 10px;"><div class="progress-bar bg-success" style="width: ${pct}%"></div></div>
+    </div>`;
+
+    html += `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Subject</th><th>Section</th><th>Unit Name</th><th>Status</th></tr></thead>
+        <tbody>`;
+
+    data.topics.forEach(t => {
+        let badge = t.status == 'Completed' ? 'success' : (t.status == 'In Progress' ? 'warning' : 'secondary');
+        html += `<tr><td>${t.subject_name}</td><td>${t.section}</td><td><b>${t.unit_name}</b></td><td><span class="badge bg-${badge}">${t.status}</span></td></tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+document.getElementById("createSyllabusForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/teacher/api/syllabus/create", { method: "POST", headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }, body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) { e.target.reset(); loadSyllabus(); }
+});
+
+loadSubjects();
+loadSyllabus();
+</script>
+{% endblock %}

@@ -1,0 +1,220 @@
+<!-- templates/principal/ai_assistant.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}AI Principal Assistant{% endblock %}
+{% block page_title %}AI Principal Assistant{% endblock %}
+
+{% block content %}
+<!-- Added marked.js CDN for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<div class="container-fluid d-flex flex-column h-100" style="min-height: 0;">
+    <div class="row justify-content-center flex-grow-1 overflow-hidden" style="min-height: 0;">
+        <div class="col-12 d-flex flex-column h-100" data-aos="fade-up" style="min-height: 0;">
+            <div class="card shadow-sm flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0; border: none; border-radius: 1rem;">
+
+                <!-- Header -->
+                <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between flex-shrink-0" style="border-bottom: 1px solid #e9ecef;">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                            <i class="bi bi-robot text-white fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 font-weight-bold">Principal AI Command Center</h5>
+                            <small class="text-muted d-flex align-items-center">
+                                <span class="badge bg-success rounded-circle p-1 me-1" style="width: 8px; height: 8px;"></span>
+                                Multi-Agent System Online
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Body -->
+                <div class="card-body p-4 flex-grow-1 overflow-auto bg-light" id="chatBody" style="min-height: 0;">
+                    <!-- Welcome Message -->
+                    <div class="d-flex justify-content-start mb-4">
+                        <div class="card border-0 shadow-sm p-3 bg-white" style="max-width: 80%; border-radius: 1rem;">
+                            <small class="text-muted d-block mb-1">AI Supervisor</small>
+                            <p class="mb-0 text-dark">Good evening, Principal. How can I assist you in analyzing college data or executing approvals today?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions (Fixed) -->
+                <div class="px-3 pt-3 bg-light border-top flex-shrink-0">
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <button class="btn btn-sm btn-outline-primary quick-action-btn">College Summary</button>
+                        <button class="btn btn-sm btn-outline-primary quick-action-btn">Pending Approvals</button>
+                        <button class="btn btn-sm btn-outline-primary quick-action-btn">Show HR Stats</button>
+                        <button class="btn btn-sm btn-outline-primary quick-action-btn">Generate complete executive report</button>
+                    </div>
+                </div>
+
+                <!-- Input Area (Fixed) -->
+                <div class="card-footer bg-white p-3 flex-shrink-0" style="border-top: 1px solid #e9ecef;">
+                    <form id="chatForm">
+                        <div class="input-group" style="height: 50px;">
+                            <input type="text" class="form-control form-control-lg border-0 bg-light" id="questionInput" placeholder="Ask about academics, finance, HR, operations..." style="border-radius: 0.5rem 0 0 0.5rem;" required>
+                            <button class="btn btn-primary btn-lg px-4" type="submit" id="sendBtn" style="border-radius: 0 0.5rem 0.5rem 0;">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ensure Markdown content inside chat bubbles looks good */
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+    .markdown-content p {
+        margin-bottom: 0.5rem;
+    }
+    .markdown-content strong {
+        color: #111827;
+    }
+</style>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+const chatBody = document.getElementById("chatBody");
+
+function scrollToBottom() { chatBody.scrollTop = chatBody.scrollHeight; }
+
+function addMessage(text, isUser, isConfirmationCard = false) {
+    const wrapper = document.createElement("div");
+    wrapper.className = `d-flex justify-content-${isUser ? 'end' : 'start'} mb-3`;
+
+    if(isConfirmationCard) {
+        // Render HITL Confirmation Card
+        wrapper.innerHTML = `
+            <div class="card border-warning shadow-sm p-3 bg-white" style="max-width: 80%; border-left: 4px solid #ffc107; border-radius: 0.5rem;">
+                <small class="text-muted d-block mb-1">Action Required</small>
+                <p class="mb-3 text-dark" style="white-space: pre-line;">${text}</p>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" onclick="submitConfirmation(true)">
+                        <i class="bi bi-check-circle"></i> Confirm Execution
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="submitConfirmation(false)">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        const bgColor = isUser ? 'bg-primary text-white' : 'bg-white';
+        const roleName = isUser ? 'You' : 'AI Supervisor';
+
+        // If AI message, parse as Markdown. If User, plain text.
+        const formattedText = isUser ? text.replace(/\n/g, '<br>') : marked.parse(text);
+
+        wrapper.innerHTML = `
+            <div class="card border-0 shadow-sm p-3 ${bgColor}" style="max-width: 80%; border-radius: 1rem;">
+                <small class="${isUser ? 'text-white-50' : 'text-muted'} d-block mb-1">${roleName}</small>
+                <div class="mb-0 ${isUser ? '' : 'markdown-content'}">${formattedText}</div>
+            </div>
+        `;
+    }
+
+    chatBody.appendChild(wrapper);
+    scrollToBottom();
+}
+
+// Function to handle Quick Action buttons
+document.querySelectorAll(".quick-action-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+        document.getElementById("questionInput").value = this.textContent;
+        document.getElementById("chatForm").dispatchEvent(new Event("submit"));
+    });
+});
+
+// Function to handle HITL confirmation submission
+window.submitConfirmation = function(isConfirmed) {
+    const input = document.getElementById("questionInput");
+    input.value = isConfirmed ? "Yes" : "Cancel";
+    document.getElementById("chatForm").dispatchEvent(new Event("submit"));
+}
+
+// Handle Form Submit
+document.getElementById("chatForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const input = document.getElementById("questionInput");
+    const btn = document.getElementById("sendBtn");
+    const question = input.value.trim();
+
+    if(!question) return;
+
+    addMessage(question, true);
+    input.value = "";
+
+    // Show Loading
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    btn.disabled = true;
+    const statusWrapper = document.createElement("div");
+    statusWrapper.className = "d-flex justify-content-start mb-3";
+    statusWrapper.innerHTML = `<div class="text-muted small p-2"><span class="spinner-border spinner-border-sm"></span> Analyzing request & routing to specialized agent...</div>`;
+    chatBody.appendChild(statusWrapper);
+
+    const formData = new URLSearchParams();
+    formData.append("question", question);
+
+    try {
+        const res = await fetch("/principal/api/ai/ask", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + getToken(), "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData
+        });
+        const data = await res.json();
+
+        statusWrapper.remove(); // Remove loading
+
+        if(data.success) {
+            if(data.requires_confirmation) {
+                // Render as a confirmation card
+                addMessage(data.answer, false, true);
+            } else {
+                addMessage(data.answer, false);
+            }
+        } else {
+            addMessage("Sorry, I couldn't process that request.", false);
+        }
+    } catch(err) {
+        statusWrapper.remove();
+        addMessage("Network error or backend is not responding.", false);
+    } finally {
+        btn.innerHTML = '<i class="bi bi-send-fill"></i>';
+        btn.disabled = false;
+    }
+});
+
+// Auto-trigger Daily Briefing on Page Load
+window.addEventListener('load', function() {
+    // Small delay to ensure UI is fully ready
+    setTimeout(() => {
+        const input = document.getElementById("questionInput");
+        const btn = document.getElementById("sendBtn");
+
+        // Programmatically set the question
+        input.value = "Good morning, please give me my daily institutional briefing.";
+
+        // Trigger the form submit
+        document.getElementById("chatForm").dispatchEvent(new Event("submit"));
+    }, 500);
+});
+
+</script>
+{% endblock %}

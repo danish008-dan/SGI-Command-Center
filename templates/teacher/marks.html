@@ -1,0 +1,188 @@
+<!-- templates/teacher/marks.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Marks Entry{% endblock %}
+{% block page_title %}Marks Entry & Validation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Internal Assessment Marks</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label small">Subject</label>
+                    <select id="subjectSelect" class="form-select form-select-sm">
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Section</label>
+                    <select id="sectionSelect" class="form-select form-select-sm" disabled>
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Exam Type</label>
+                    <select id="examTypeSelect" class="form-select form-select-sm">
+                        <option value="Mid-1">Mid-1</option>
+                        <option value="Mid-2">Mid-2</option>
+                        <option value="Quiz">Quiz</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Practical">Practical</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Max Marks</label>
+                    <input type="number" id="maxMarksInput" class="form-control form-control-sm" value="30">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary btn-sm w-100" onclick="loadStudents()">
+                        <i class="bi bi-search"></i> Load
+                    </button>
+                </div>
+            </div>
+
+            <div id="marksContainer" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Enrollment</th>
+                                <th>Student Name</th>
+                                <th style="width: 150px;">Marks Obtained</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marksBody"></tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between mt-3">
+                    <button class="btn btn-success" onclick="saveMarks(false)">
+                        <i class="bi bi-save"></i> Save Draft
+                    </button>
+                    <button class="btn btn-primary" onclick="saveMarks(true)">
+                        <i class="bi bi-send"></i> Submit for Verification
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+let currentStudents = [];
+
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => {
+        select.innerHTML += `<option value="${s.subject_id}">${s.subject_name} (Sem ${s.semester})</option>`;
+    });
+}
+
+document.getElementById("subjectSelect").addEventListener("change", async function() {
+    const sectionSelect = document.getElementById("sectionSelect");
+    sectionSelect.innerHTML = '<option value="">Select...</option>';
+    if(this.value) {
+        sectionSelect.disabled = true;
+        const res = await fetch(`/teacher/api/sections?subject_id=${this.value}`, { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+        if(data.sections && data.sections.length > 0) {
+            data.sections.forEach(sec => sectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`);
+            sectionSelect.disabled = false;
+        } else {
+            // Q6/Q7: clear empty-state, no fake placeholder, dropdown stays disabled.
+            sectionSelect.innerHTML = '<option value="">No sections available for this subject</option>';
+        }
+    } else {
+        sectionSelect.disabled = true;
+    }
+});
+
+async function loadStudents() {
+    const subjectId = document.getElementById("subjectSelect").value;
+    const section = document.getElementById("sectionSelect").value;
+    const examType = document.getElementById("examTypeSelect").value;
+
+    if(!subjectId || !section) { alert("Select Subject and Section."); return; }
+
+    const res = await fetch(`/teacher/api/students?subject_id=${subjectId}&section=${section}`, { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+
+    const marksRes = await fetch(`/teacher/api/marks?subject_id=${subjectId}&section=${section}&exam_type=${examType}`, { headers: { "Authorization": "Bearer " + getToken() } });
+    const marksData = await marksRes.json();
+
+    currentStudents = data.students;
+    const body = document.getElementById("marksBody");
+    body.innerHTML = "";
+
+    currentStudents.forEach(s => {
+        const existingMark = marksData.marks[s.student_id];
+        const obtained = existingMark ? existingMark.obtained_marks : '';
+        const remarks = existingMark ? existingMark.remarks : '';
+        body.innerHTML += `
+            <tr>
+                <td>${s.enrollment_no}</td>
+                <td>${s.student_name}</td>
+                <td><input type="number" class="form-control form-control-sm marks-input" data-student-id="${s.student_id}" value="${obtained}" min="0"></td>
+                <td><input type="text" class="form-control form-control-sm remarks-input" data-student-id="${s.student_id}" value="${remarks || ''}"></td>
+            </tr>
+        `;
+    });
+    document.getElementById("marksContainer").style.display = "block";
+}
+
+async function saveMarks(isSubmit) {
+    const subjectId = parseInt(document.getElementById("subjectSelect").value);
+    const section = document.getElementById("sectionSelect").value;
+    const examType = document.getElementById("examTypeSelect").value;
+    const maxMarks = parseInt(document.getElementById("maxMarksInput").value);
+
+    const marks = [];
+    let missingMarks = false;
+
+    document.querySelectorAll('.marks-input').forEach(input => {
+        const val = input.value.trim();
+        if(val === '') missingMarks = true;
+        marks.push({
+            student_id: parseInt(input.dataset.studentId),
+            obtained_marks: val === '' ? 0 : parseFloat(val),
+            remarks: document.querySelector(`.remarks-input[data-student-id="${input.dataset.studentId}"]`).value
+        });
+    });
+
+    if(isSubmit && missingMarks) {
+        if(!confirm("Some students have missing marks. They will be saved as 0. Do you want to proceed with submission?")) return;
+    }
+
+    const res = await fetch("/teacher/api/save-marks", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ subject_id: subjectId, section: section, exam_type: examType, max_marks: maxMarks, marks: marks })
+    });
+    const data = await res.json();
+    alert(data.message);
+
+    if(data.success && isSubmit) {
+        const formData = new URLSearchParams();
+        formData.append("subject_id", subjectId);
+        formData.append("exam_type", examType);
+        const subRes = await fetch("/teacher/api/marks/submit", { method: "POST", headers: { "Authorization": "Bearer " + getToken() }, body: formData });
+        const subData = await subRes.json();
+        alert(subData.message);
+    }
+}
+loadSubjects();
+</script>
+{% endblock %}

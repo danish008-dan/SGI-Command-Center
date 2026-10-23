@@ -1,0 +1,83 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Maintenance Requests{% endblock %}
+{% block page_title %}Asset Maintenance & Repairs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Maintenance Work Orders</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Asset</th><th>Issue</th><th>Priority</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for m in requests %}
+                        <tr>
+                            <td>{{ m.asset_code }} <small class="text-muted">({{ m.asset_name }})</small></td>
+                            <td>{{ m.issue_description }}</td>
+                            <td><span class="badge bg-{% if m.priority == 'High' %}danger{% elif m.priority == 'Medium' %}warning{% else %}info{% endif %}">{{ m.priority }}</span></td>
+                            <td><span class="badge bg-{% if m.status == 'Resolved' or m.status == 'Closed' %}success{% elif m.status == 'In Progress' %}primary{% else %}secondary{% endif %}">{{ m.status }}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary update-maint-btn" 
+                                        data-id="{{ m.request_id }}" data-status="{{ m.status }}">Update Status</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No maintenance requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Maintenance Modal -->
+<div class="modal fade" id="maintModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="maintForm">
+                <div class="modal-header"><h5 class="modal-title">Update Maintenance Status</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" name="request_id" id="maint_req_id">
+                    <div class="mb-3">
+                        <label class="form-label">New Status</label>
+                        <select class="form-select" name="status" id="maint_status">
+                            <option>Under Review</option><option>In Progress</option>
+                            <option>Resolved</option><option>Closed</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resolution Notes</label>
+                        <textarea class="form-control" name="resolution_notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Update</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.querySelectorAll('.update-maint-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('maint_req_id').value = this.dataset.id;
+        document.getElementById('maint_status').value = this.dataset.status;
+        new bootstrap.Modal(document.getElementById('maintModal')).show();
+    });
+});
+
+document.getElementById("maintForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/admin/api/maintenance/update", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+});
+</script>
+{% endblock %}

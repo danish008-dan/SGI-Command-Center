@@ -1,0 +1,69 @@
+<!-- templates/teacher/academic_reports.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Academic Reports{% endblock %}
+{% block page_title %}Academic Intelligence Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="reportContainer">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Report...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    try {
+        const res = await fetch("/teacher/api/reports/academic", {
+            headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }
+        });
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const data = await res.json();
+        const c = document.getElementById("reportContainer");
+        const s = data.teaching_stats || {}; // Safe fallback
+
+        c.innerHTML = `
+            <div class="alert alert-primary shadow-sm" data-aos="fade-down">
+                <h5 class="mb-1"><i class="bi bi-file-earmark-bar-graph"></i> Teacher Academic Summary</h5>
+                <p class="mb-0 small">Consolidated view of teaching activity and academic risk.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6" data-aos="zoom-in">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3"><h6 class="mb-0 text-primary">Teaching Operations</h6></div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">Total Subjects: <b>${s.subjects || 0}</b></li>
+                                <li class="list-group-item d-flex justify-content-between">Total Students: <b>${s.students || 0}</b></li>
+                                <li class="list-group-item d-flex justify-content-between">Attendance Sessions: <b>${s.att_sessions || 0}</b></li>
+                                <li class="list-group-item d-flex justify-content-between">Assignments Created: <b>${s.assignments || 0}</b></li>
+                                <li class="list-group-item d-flex justify-content-between">Pending Marks Drafts: <b class="text-warning">${s.pending_marks || 0}</b></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="card shadow-sm h-100 text-center d-flex align-items-center justify-content-center p-4">
+                        <div>
+                            <h1 class="display-4 fw-bold text-danger">${data.risk_count || 0}</h1>
+                            <h5 class="text-muted">Students with Academic Risk</h5>
+                            <p class="small text-muted mt-2 mb-0">(Low Attendance or Missing Marks)</p>
+                            <a href="/teacher/risk-dashboard" class="btn btn-sm btn-outline-danger mt-3">View Risk Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch (error) {
+        console.error("Report Error:", error);
+        document.getElementById("reportContainer").innerHTML = `<div class="alert alert-danger">Failed to load academic report. Check console for details.</div>`;
+    }
+}
+loadData();
+</script>
+{% endblock %}

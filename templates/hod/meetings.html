@@ -1,0 +1,52 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Department Meetings{% endblock %}
+{% block page_title %}Meetings & MoM{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Schedule Department Meeting</h5></div>
+        <div class="card-body">
+            <form id="createMeetingForm">
+                <div class="row g-3">
+                    <div class="col-md-5"><input type="text" class="form-control" name="title" placeholder="Meeting Title" required></div>
+                    <div class="col-md-3"><input type="date" class="form-control" name="meeting_date" required></div>
+                    <div class="col-md-4"><input type="text" class="form-control" name="venue" placeholder="Venue" required></div>
+                    <div class="col-12"><textarea class="form-control" name="agenda" rows="2" placeholder="Agenda" required></textarea></div>
+                    <div class="col-12"><button type="submit" class="btn btn-primary">Schedule Meeting</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Department Meetings</h5></div>
+        <div class="card-body" id="meetingsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/meetings", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("meetingsBody");
+    if(data.meetings.length === 0) { body.innerHTML = '<p class="text-muted text-center">No meetings scheduled.</p>'; return; }
+    let html = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Title</th><th>Date</th><th>Venue</th><th>Status</th><th>Agenda</th></tr></thead><tbody>`;
+    data.meetings.forEach(m => {
+        html += `<tr><td><b>${m.title}</b></td><td>${new Date(m.meeting_date).toLocaleDateString()}</td><td>${m.venue}</td><td><span class="badge bg-info">${m.status}</span></td><td><small class="text-muted">${m.agenda || '-'}</small></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+document.getElementById("createMeetingForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/hod/api/meetings/create", { method: "POST", headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }, body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) { e.target.reset(); loadData(); }
+});
+loadData();
+</script>
+{% endblock %}

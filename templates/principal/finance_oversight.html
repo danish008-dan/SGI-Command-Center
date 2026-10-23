@@ -1,0 +1,53 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}Finance Oversight{% endblock %}
+{% block page_title %}Finance Oversight{% endblock %}
+{% block content %}
+<div class="container-fluid" id="financeOversight">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/principal/api/finance", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const s = await res.json();
+    const c = document.getElementById("financeOversight");
+    c.innerHTML = `
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-xl-3" data-aos="zoom-in">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                    <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Total Demand</p><h2 class="mb-0">₹${s.demand.toLocaleString()}</h2></div><i class="bi bi-cash-stack fs-1 opacity-50"></i></div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                    <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Total Collected</p><h2 class="mb-0">₹${s.collected.toLocaleString()}</h2></div><i class="bi bi-check-circle-fill fs-1 opacity-50"></i></div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white h-100">
+                    <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Outstanding</p><h2 class="mb-0">₹${s.outstanding.toLocaleString()}</h2></div><i class="bi bi-exclamation-octagon-fill fs-1 opacity-50"></i></div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100">
+                    <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Collection Rate</p><h2 class="mb-0">${s.collection_rate}%</h2></div><i class="bi bi-graph-up-arrow fs-1 opacity-50"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-12" data-aos="fade-up">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0">Financial Actions</h5></div>
+                    <div class="card-body">
+                        <p>Pending Fee Concession Approvals: <b class="text-warning">${s.pending_concessions}</b></p>
+                        <a href="/principal/approvals" class="btn btn-sm btn-primary">Go to Approval Center</a>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    AOS.init();
+}
+loadData();
+</script>
+{% endblock %}

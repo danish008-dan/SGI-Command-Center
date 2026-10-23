@@ -1,0 +1,63 @@
+<!-- templates/teacher/meetings.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Meetings{% endblock %}
+{% block page_title %}Meetings & Action Items{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-7" data-aos="fade-up">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3"><h5 class="mb-0">Department Meetings</h5></div>
+            <div class="card-body" id="meetBody"><div class="text-center py-5"><div class="spinner-border text-primary"></div></div></div>
+        </div>
+    </div>
+    <div class="col-md-5" data-aos="fade-up" data-aos-delay="100">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3"><h5 class="mb-0 text-primary">My Action Items</h5></div>
+            <div class="card-body" id="actBody"><div class="text-center py-5"><div class="spinner-border text-primary"></div></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/meetings", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+
+    const mb = document.getElementById("meetBody");
+    if(data.meetings.length === 0) mb.innerHTML = '<p class="text-muted text-center">No meetings scheduled.</p>';
+    else {
+        let h = '<div class="list-group">';
+        data.meetings.forEach(m => {
+            h += `<div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${m.title}</h6>
+                    <small class="badge bg-info">${m.status}</small>
+                </div>
+                <p class="mb-1 text-muted small">${m.agenda || 'No agenda set.'}</p>
+                <small><i class="bi bi-calendar"></i> ${new Date(m.meeting_date).toLocaleDateString()} | <i class="bi bi-geo-alt"></i> ${m.venue}</small>
+            </div>`;
+        });
+        mb.innerHTML = h + '</div>';
+    }
+
+    const ab = document.getElementById("actBody");
+    if(data.action_items.length === 0) ab.innerHTML = '<p class="text-muted text-center">No action items assigned to you.</p>';
+    else {
+        let h = '<ul class="list-group list-group-flush">';
+        data.action_items.forEach(a => {
+            let badge = a.status === 'Completed' ? 'success' : 'warning';
+            h += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">${a.meeting_title}</small>
+                    <p class="mb-0">${a.description}</p>
+                </div>
+                <span class="badge bg-${badge}">${a.status}</span>
+            </li>`;
+        });
+        ab.innerHTML = h + '</ul>';
+    }
+}
+loadData();
+</script>
+{% endblock %}

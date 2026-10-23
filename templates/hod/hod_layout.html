@@ -1,0 +1,954 @@
+<!-- templates/hod/hod_layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {% block title %}HOD Panel{% endblock %} - SGI Command Center
+    </title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+        rel="stylesheet"
+    >
+
+    <!-- AOS -->
+    <link
+        href="https://unpkg.com/aos@2.3.1/dist/aos.css"
+        rel="stylesheet"
+    >
+
+    <!-- Main Project CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+
+    <style>
+
+
+
+        /* ==============================
+           SIDEBAR
+        ============================== */
+
+
+
+
+
+
+
+
+
+        /* ==============================
+           SIDEBAR BRAND
+        ============================== */
+
+
+
+
+
+
+
+
+
+
+
+        /* ==============================
+           MAIN NAVIGATION
+        ============================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* ==============================
+           DROPDOWN
+        ============================== */
+
+
+
+
+
+        /* ==============================
+           SUBMENU
+        ============================== */
+
+
+
+
+
+
+
+
+
+
+
+        /* ==============================
+           COLLAPSED SIDEBAR
+        ============================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* ==============================
+           TOOLTIP
+        ============================== */
+
+
+
+
+
+        /* ==============================
+           CONTENT
+        ============================== */
+
+        .content {
+            min-width: 0;
+            width: 100%;
+            transition:
+                width var(--hod-sidebar-transition),
+                margin-left var(--hod-sidebar-transition);
+        }
+
+        /* ==============================
+           SIDEBAR TOGGLE
+        ============================== */
+
+
+
+
+
+
+
+
+
+        /* ==============================
+           TABLET / MOBILE
+        ============================== */
+
+        @media (max-width: 991px) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            .content {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+
+}
+
+        /* ==============================
+           SMALL MOBILE
+        ============================== */
+
+        @media (max-width: 576px) {
+
+
+
+
+
+
+            header {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            main {
+                padding: 12px !important;
+            }
+
+}
+
+</style>
+</head>
+
+<body class="bg-light">
+
+<div class="wrapper d-flex align-items-stretch">
+
+    <!-- ==============================
+         SIDEBAR
+    ============================== -->
+
+    <nav class="sidebar bg-dark text-white" id="sidebar">
+
+        <!-- Brand -->
+        <div class="hod-sidebar-brand">
+            <div class="hod-brand-content">
+                <h3 class="hod-brand-title">SGI CMS</h3>
+                <p class="hod-brand-subtitle">HOD PANEL</p>
+            </div>
+
+            <div class="hod-collapsed-logo">
+                SGI
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <ul class="nav flex-column">
+
+            <!-- ==============================
+                 EXECUTIVE DASHBOARD
+            ============================== -->
+
+            <li class="nav-item">
+                <a
+                    class="nav-link text-white"
+                    href="/hod/dashboard"
+                    data-tooltip="Dashboard"
+                >
+                    <i class="bi bi-speedometer2"></i>
+                    <span class="hod-nav-label">
+                        Executive Dashboard
+                    </span>
+                </a>
+            </li>
+
+            <!-- AI Assistant -->
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/hod/ai-assistant" data-tooltip="AI Assistant">
+                    <i class="bi bi-robot"></i>
+                    <span class="hod-nav-label">AI Assistant</span>
+                </a>
+            </li>
+
+            <!-- Academic Oversight Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#academicMenu" role="button" aria-expanded="false" aria-controls="academicMenu" data-tooltip="Academic Oversight">
+                    <i class="bi bi-layers"></i>
+                    <span class="hod-nav-label">Academics</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="academicMenu">
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/faculty"><i class="bi bi-person-badge"></i> Faculty</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/subjects"><i class="bi bi-journal-bookmark"></i> Subjects</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/workload"><i class="bi bi-briefcase"></i> Workload</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/marks-monitoring"><i class="bi bi-clipboard-data"></i> Marks Monitoring</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/results-monitoring"><i class="bi bi-file-earmark-text"></i> Results Status</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/performance"><i class="bi bi-graph-down"></i> Performance</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/academic-plan"><i class="bi bi-calendar-week"></i> Academic Plan</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/complaints"><i class="bi bi-shield-exclamation"></i> Complaints</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- ==============================
+                 TIMETABLE
+            ============================== -->
+
+            <li class="nav-item">
+
+                <a
+                    class="nav-link text-white dropdown-toggle"
+                    data-bs-toggle="collapse"
+                    href="#timetableMenu"
+                    role="button"
+                    aria-expanded="false"
+                    aria-controls="timetableMenu"
+                    data-tooltip="Timetable"
+                >
+                    <i class="bi bi-calendar3"></i>
+
+                    <span class="hod-nav-label">
+                        Timetable
+                    </span>
+
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+
+                <div class="collapse" id="timetableMenu">
+
+                    <ul class="submenu">
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/timetable">
+                                <i class="bi bi-calendar-week"></i>
+                                View Timetable
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a
+                                class="nav-link"
+                                href="/hod/timetable-conflicts"
+                            >
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                Conflicts
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+            </li>
+
+            <!-- Operations Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#opsMenu" role="button" aria-expanded="false" aria-controls="opsMenu" data-tooltip="Operations">
+                    <i class="bi bi-gear"></i>
+                    <span class="hod-nav-label">Operations</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="opsMenu">
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/notices"><i class="bi bi-megaphone"></i> Notices</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/events"><i class="bi bi-calendar-event"></i> Events</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/meetings"><i class="bi bi-people"></i> Meetings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/labs"><i class="bi bi-hdd-rack"></i> Labs & Assets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/maintenance"><i class="bi bi-tools"></i> Maintenance</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/documents"><i class="bi bi-folder"></i> Documents</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/placement"><i class="bi bi-briefcase"></i> Placement</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- ==============================
+                 APPROVALS
+            ============================== -->
+
+            <li class="nav-item">
+
+                <a
+                    class="nav-link text-white dropdown-toggle"
+                    data-bs-toggle="collapse"
+                    href="#approvalsMenu"
+                    role="button"
+                    aria-expanded="false"
+                    aria-controls="approvalsMenu"
+                    data-tooltip="Approvals"
+                >
+                    <i class="bi bi-check2-square"></i>
+
+                    <span class="hod-nav-label">
+                        Approvals
+                    </span>
+
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+
+                <div class="collapse" id="approvalsMenu">
+
+                    <ul class="submenu">
+
+                        <li class="nav-item">
+                            <a
+                                class="nav-link"
+                                href="/hod/marks-verification"
+                            >
+                                <i class="bi bi-clipboard-check"></i>
+                                Marks Verification
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a
+                                class="nav-link"
+                                href="/hod/leaves"
+                            >
+                                <i class="bi bi-calendar-check"></i>
+                                Faculty Leave
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+            </li>
+
+
+            <!-- Governance Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#govMenu" role="button" aria-expanded="false" aria-controls="govMenu" data-tooltip="Governance">
+                    <i class="bi bi-shield-check"></i>
+                    <span class="hod-nav-label">Governance</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="govMenu">
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/approvals"><i class="bi bi-clipboard-check"></i> Approvals</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/reports"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/notifications"><i class="bi bi-bell"></i> Alerts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/hod/audit"><i class="bi bi-clock-history"></i> My Activity</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- ==============================
+                 PROFILE
+            ============================== -->
+
+            <li class="nav-item">
+
+                <a
+                    class="nav-link text-white"
+                    href="/profile"
+                    data-tooltip="My Profile"
+                >
+                    <i class="bi bi-person-gear"></i>
+
+                    <span class="hod-nav-label">
+                        My Profile
+                    </span>
+                </a>
+
+            </li>
+
+            <!-- ==============================
+                 LOGOUT
+            ============================== -->
+
+            <li class="nav-item">
+
+                <a
+                    class="nav-link text-danger"
+                    href="#"
+                    onclick="logout(); return false;"
+                    data-tooltip="Logout"
+                >
+                    <i class="bi bi-box-arrow-right"></i>
+
+                    <span class="hod-nav-label">
+                        Logout
+                    </span>
+                </a>
+
+            </li>
+
+        </ul>
+
+    </nav>
+
+    <!-- Mobile Overlay -->
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+    <!-- ==============================
+         MAIN CONTENT
+    ============================== -->
+
+    <div class="content flex-grow-1">
+
+        <!-- Header -->
+        <header
+            class="navbar navbar-light bg-white shadow-sm px-4 py-3 d-flex justify-content-between align-items-center"
+        >
+
+            <div class="d-flex align-items-center">
+
+                <button
+                    id="sidebarToggle"
+                    class="btn me-3"
+                    type="button"
+                    aria-label="Toggle sidebar"
+                    title="Toggle Sidebar"
+                >
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+
+                <h5 class="mb-0 text-primary-custom">
+                    {% block page_title %}Dashboard{% endblock %}
+                </h5>
+
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+
+                <div class="text-end d-none d-md-block">
+
+                    <div class="text-muted small fw-normal">
+                        <span id="navTime">--:--:--</span>
+                        |
+                        <span id="navDate">Loading...</span>
+                    </div>
+
+                    <div class="fw-bold text-dark">
+                        <span id="navGreeting">Welcome</span>,
+                        <span id="navUserName">User</span>
+                    </div>
+
+                </div>
+
+                <img
+                    id="navUserImg"
+                    src="/static/images/default.png"
+                    alt="Profile"
+                    class="rounded-circle border"
+                    width="40"
+                    height="40"
+                    style="object-fit: cover;"
+                >
+
+            </div>
+
+        </header>
+
+        <!-- Main Page Content -->
+        <main class="p-4">
+            {% block content %}{% endblock %}
+        </main>
+
+    </div>
+
+</div>
+
+<!-- ==============================
+     JAVASCRIPT LIBRARIES
+============================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+    AOS.init({
+        duration: 500,
+        once: true
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("sidebarToggle");
+        const overlay = document.getElementById("sidebarOverlay");
+
+        if (!sidebar || !toggleBtn) {
+            return;
+        }
+
+        /* ==============================
+           LOAD DESKTOP SIDEBAR STATE
+        ============================== */
+
+        if (window.innerWidth > 991) {
+
+            const savedState =
+                localStorage.getItem("erpSidebarCollapsed");
+
+            if (savedState === "true") {
+                sidebar.classList.add("collapsed");
+            }
+        }
+
+        /* ==============================
+           SIDEBAR TOGGLE
+        ============================== */
+
+        toggleBtn.addEventListener("click", function () {
+
+            if (window.innerWidth > 991) {
+
+                sidebar.classList.toggle("collapsed");
+
+                const isCollapsed =
+                    sidebar.classList.contains("collapsed");
+
+                localStorage.setItem(
+                    "erpSidebarCollapsed",
+                    isCollapsed ? "true" : "false"
+                );
+
+            } else {
+
+                sidebar.classList.toggle("show");
+
+                if (overlay) {
+                    overlay.classList.toggle("show");
+                }
+            }
+        });
+
+        /* ==============================
+           MOBILE OVERLAY
+        ============================== */
+
+        if (overlay) {
+
+            overlay.addEventListener("click", function () {
+
+                sidebar.classList.remove("show");
+                overlay.classList.remove("show");
+
+            });
+        }
+
+        /* ==============================
+           WINDOW RESIZE
+        ============================== */
+
+        window.addEventListener("resize", function () {
+
+            if (window.innerWidth > 991) {
+
+                sidebar.classList.remove("show");
+
+                if (overlay) {
+                    overlay.classList.remove("show");
+                }
+
+                const savedState =
+                    localStorage.getItem("erpSidebarCollapsed");
+
+                if (savedState === "true") {
+                    sidebar.classList.add("collapsed");
+                }
+            }
+        });
+
+    });
+
+    /* ==============================
+       LOGOUT
+    ============================== */
+
+    function logout() {
+
+        localStorage.removeItem("access_token");
+
+        window.location.href = "/login";
+    }
+
+    /* ==============================
+       LOAD USER INFORMATION
+    ============================== */
+
+    async function loadUserInfo() {
+
+        const token =
+            localStorage.getItem("access_token");
+
+        if (!token) {
+
+            window.location.href = "/login";
+            return;
+        }
+
+        try {
+
+            const res = await fetch(
+                "/hod/api/me",
+                {
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                }
+            );
+
+            if (res.ok) {
+
+                const data = await res.json();
+
+                const greetingElement =
+                    document.getElementById("navGreeting");
+
+                const nameElement =
+                    document.getElementById("navUserName");
+
+                const dateElement =
+                    document.getElementById("navDate");
+
+                const userImg =
+                    document.getElementById("navUserImg");
+
+                if (greetingElement) {
+                    greetingElement.textContent =
+                        data.greeting || "Welcome";
+                }
+
+                if (nameElement) {
+                    nameElement.textContent =
+                        data.full_name || "User";
+                }
+
+                if (dateElement) {
+                    dateElement.textContent =
+                        data.current_date || "";
+                }
+
+                if (userImg && data.profile_image) {
+
+                    userImg.src =
+                        "/static/images/" + data.profile_image;
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Unable to load HOD user information:",
+                error
+            );
+        }
+    }
+
+    /* ==============================
+       LIVE CLOCK
+    ============================== */
+
+    function updateClock() {
+
+        const now = new Date();
+
+        let h = now.getHours();
+
+        const m =
+            String(now.getMinutes()).padStart(2, "0");
+
+        const s =
+            String(now.getSeconds()).padStart(2, "0");
+
+        const ampm =
+            h >= 12 ? "PM" : "AM";
+
+        h = h % 12;
+        h = h ? h : 12;
+
+        const clockElement =
+            document.getElementById("navTime");
+
+        if (clockElement) {
+
+            clockElement.textContent =
+                `${h}:${m}:${s} ${ampm}`;
+        }
+    }
+
+    /* ==============================
+       INITIALIZE
+    ============================== */
+
+    loadUserInfo();
+
+    updateClock();
+
+    setInterval(updateClock, 1000);
+</script>
+
+{% block custom_js %}{% endblock %}
+
+    <script src="/static/js/sidebar.js" defer></script>
+
+    <!-- HOD sidebar state persistence: keep the active dropdown and scroll position across navigation. -->
+    <script>
+        (function () {
+            "use strict";
+
+            const OPEN_MENU_KEY = "hodSidebarOpenDropdown";
+            const SCROLL_KEY = "hodSidebarScrollTop";
+
+            function safeGet(key) {
+                try { return window.localStorage.getItem(key); }
+                catch (error) { return null; }
+            }
+
+            function safeSet(key, value) {
+                try { window.localStorage.setItem(key, String(value)); }
+                catch (error) { /* Storage may be disabled; sidebar still works normally. */ }
+            }
+
+            function safeRemove(key) {
+                try { window.localStorage.removeItem(key); }
+                catch (error) { /* Storage may be disabled; sidebar still works normally. */ }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                const sidebar = document.getElementById("sidebar");
+                if (!sidebar) return;
+
+                const collapseMenus = Array.from(
+                    sidebar.querySelectorAll(".collapse[id]")
+                );
+
+                function saveScroll() {
+                    safeSet(SCROLL_KEY, sidebar.scrollTop || 0);
+                }
+
+                // Preserve the existing single-open-dropdown behavior consistently.
+                collapseMenus.forEach(function (menu) {
+                    menu.addEventListener("show.bs.collapse", function () {
+                        safeSet(OPEN_MENU_KEY, menu.id);
+
+                        collapseMenus.forEach(function (otherMenu) {
+                            if (otherMenu !== menu && otherMenu.classList.contains("show")) {
+                                const instance = bootstrap.Collapse.getOrCreateInstance(otherMenu, {
+                                    toggle: false
+                                });
+                                instance.hide();
+                            }
+                        });
+                    });
+
+                    menu.addEventListener("shown.bs.collapse", function () {
+                        safeSet(OPEN_MENU_KEY, menu.id);
+                    });
+
+                    menu.addEventListener("hidden.bs.collapse", function () {
+                        // Do not erase a newer menu selection while another menu opens.
+                        if (safeGet(OPEN_MENU_KEY) === menu.id) {
+                            safeRemove(OPEN_MENU_KEY);
+                        }
+                    });
+                });
+
+                // Save the submenu being used before its link navigates to another page.
+                sidebar.addEventListener("click", function (event) {
+                    const link = event.target.closest("a.nav-link[href]");
+                    if (!link || !sidebar.contains(link)) return;
+
+                    const parentMenu = link.closest(".collapse[id]");
+                    if (parentMenu) {
+                        safeSet(OPEN_MENU_KEY, parentMenu.id);
+                        saveScroll();
+                    }
+                }, true);
+
+                sidebar.addEventListener("scroll", saveScroll, { passive: true });
+                window.addEventListener("pagehide", saveScroll);
+
+                // Restore the last open submenu and sidebar scroll after each page load.
+                const savedMenuId = safeGet(OPEN_MENU_KEY);
+                const savedScroll = Number(safeGet(SCROLL_KEY) || 0);
+
+                if (savedMenuId) {
+                    const savedMenu = document.getElementById(savedMenuId);
+                    if (savedMenu && sidebar.contains(savedMenu) && window.bootstrap) {
+                        const instance = bootstrap.Collapse.getOrCreateInstance(savedMenu, {
+                            toggle: false
+                        });
+                        instance.show();
+                    } else {
+                        safeRemove(OPEN_MENU_KEY);
+                    }
+                }
+
+                requestAnimationFrame(function () {
+                    sidebar.scrollTop = savedScroll;
+                    requestAnimationFrame(function () {
+                        sidebar.scrollTop = savedScroll;
+                    });
+                });
+
+                // Bootstrap's collapse animation can change sidebar height; reapply once it settles.
+                if (savedMenuId) {
+                    const savedMenu = document.getElementById(savedMenuId);
+                    if (savedMenu) {
+                        savedMenu.addEventListener("shown.bs.collapse", function restoreScrollOnce() {
+                            sidebar.scrollTop = savedScroll;
+                            savedMenu.removeEventListener("shown.bs.collapse", restoreScrollOnce);
+                        });
+                    }
+                }
+            });
+        })();
+    </script>
+
+</body>
+</html>

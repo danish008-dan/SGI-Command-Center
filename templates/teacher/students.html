@@ -1,0 +1,112 @@
+<!-- templates/teacher/students.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}My Students{% endblock %}
+{% block page_title %}My Students Directory{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Search Students</h5>
+            <div class="d-flex gap-2">
+                <select id="subjectSelect" class="form-select form-select-sm" style="width: 200px;">
+                    <option value="">Select Subject...</option>
+                </select>
+                <select id="sectionSelect" class="form-select form-select-sm" style="width: 150px;" disabled>
+                    <option value="">Select Section...</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="loadStudents()"><i class="bi bi-search"></i></button>
+            </div>
+        </div>
+        <div class="card-body" id="studBody">
+            <p class="text-center text-muted py-4">Please select a subject and section to view students.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => {
+        select.innerHTML += `<option value="${s.subject_id}" data-sections='${JSON.stringify(s.sections || [s.section])}'>${s.subject_name} (Sem ${s.semester})</option>`;
+    });
+}
+
+document.getElementById("subjectSelect").addEventListener("change", function() {
+    const sectionSelect = document.getElementById("sectionSelect");
+    sectionSelect.innerHTML = '<option value="">Select Section...</option>';
+    // Q6/Q7 decisions: do NOT insert fake N/A placeholder when no sections are returned.
+    // Instead show a clear empty-state message and keep the dropdown disabled.
+    if(this.value) {
+        sectionSelect.disabled = true;
+        fetch(`/teacher/api/sections?subject_id=${this.value}`, { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } })
+        .then(res => res.json())
+        .then(data => {
+            if(data.sections && data.sections.length > 0) {
+                data.sections.forEach(sec => sectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`);
+                sectionSelect.disabled = false;
+            } else {
+                // Clear empty-state: no placeholder value, just a message. Dropdown stays disabled.
+                sectionSelect.innerHTML = '<option value="">No sections available for this subject</option>';
+                sectionSelect.disabled = true;
+            }
+        });
+    } else {
+        sectionSelect.disabled = true;
+    }
+});
+
+async function loadStudents() {
+    const subjectId = document.getElementById("subjectSelect").value;
+    const section = document.getElementById("sectionSelect").value;
+    const body = document.getElementById("studBody");
+
+    if(!subjectId || !section) {
+        alert("Please select both subject and section.");
+        return;
+    }
+
+    body.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>`;
+
+    try {
+        const res = await fetch(`/teacher/api/students?subject_id=${subjectId}&section=${section}`, { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+        if(!res.ok) throw new Error("Unauthorized");
+        const data = await res.json();
+
+        if(data.students.length === 0) {
+            body.innerHTML = '<p class="text-center text-muted py-4">No students found for this subject and section.</p>';
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Enrollment No</th><th>Student Name</th><th>Semester</th><th class="text-end">Action</th></tr></thead>
+            <tbody>`;
+
+        data.students.forEach(s => {
+            html += `<tr>
+                <td>${s.enrollment_no}</td>
+                <td><b>${s.student_name}</b></td>
+                <td>${s.semester}</td>
+                <td class="text-end"><a href="/teacher/students/${s.student_id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View Profile</a></td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        body.innerHTML = html;
+    } catch(err) {
+        body.innerHTML = '<div class="alert alert-danger">Failed to load students or unauthorized access.</div>';
+    }
+}
+
+loadSubjects();
+</script>
+{% endblock %}

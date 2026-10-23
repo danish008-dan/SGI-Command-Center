@@ -1,0 +1,134 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Document Repository{% endblock %}
+{% block page_title %}Institutional Document Repository{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Documents</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload Document</button>
+        </div>
+        <div class="card-body">
+            <form method="get" action="/admin/docs/repository" class="row g-2 mb-3 align-items-end">
+                <div class="col-md-4"><input type="text" class="form-control" name="search" placeholder="Search title/ref..." value="{{ filters.search or '' }}"></div>
+                <div class="col-md-3">
+                    <select name="category_id" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for c in categories %}<option value="{{ c.category_id }}" {% if filters.category_id == c.category_id %}selected{% endif %}>{{ c.category_name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="Draft" {% if filters.status == 'Draft' %}selected{% endif %}>Draft</option>
+                        <option value="Pending Review" {% if filters.status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+                        <option value="Published" {% if filters.status == 'Published' %}selected{% endif %}>Published</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+                    <a href="/admin/docs/repository" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Title</th><th>Category</th><th>Ref No</th><th>Expiry</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for d in documents %}
+                        <tr>
+                            <td class="fw-bold">{{ d.title }}</td>
+                            <td><span class="badge bg-info">{{ d.category_name }}</span></td>
+                            <td>{{ d.reference_number or '-' }}</td>
+                            <td>{{ d.expiry_date or '-' }}</td>
+                            <td><span class="badge bg-{% if d.status == 'Published' %}success{% elif d.status == 'Pending Review' %}warning{% elif d.status == 'Approved' %}primary{% else %}secondary{% endif %}">{{ d.status }}</span></td>
+                            <td>
+                                <a href="/admin/docs/download/{{ d.document_id }}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-download"></i></a>
+                                {% if d.status == 'Draft' %}
+                                <button class="btn btn-sm btn-warning submit-review-btn" data-id="{{ d.document_id }}">Submit Review</button>
+                                {% elif d.status == 'Pending Review' %}
+                                <button class="btn btn-sm btn-success approve-doc-btn" data-id="{{ d.document_id }}">Approve</button>
+                                <button class="btn btn-sm btn-danger reject-doc-btn" data-id="{{ d.document_id }}">Reject</button>
+                                {% elif d.status == 'Approved' %}
+                                <button class="btn btn-sm btn-dark publish-doc-btn" data-id="{{ d.document_id }}">Publish</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No documents found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="modal-header"><h5 class="modal-title">Upload Institutional Document</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8"><label class="form-label">Document Title *</label><input type="text" class="form-control" name="title" required></div>
+                        <div class="col-md-4"><label class="form-label">Reference Number</label><input type="text" class="form-control" name="reference_number"></div>
+                        <div class="col-md-6"><label class="form-label">Category *</label>
+                            <select class="form-select" name="category_id" required>
+                                <option value="">Select Category</option>
+                                {% for c in categories %}<option value="{{ c.category_id }}">{{ c.category_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Department</label>
+                            <select class="form-select" name="department_id">
+                                <option value="">Institution Wide</option>
+                                {% for d in departments %}<option value="{{ d.department_id }}">{{ d.department_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Expiry Date (Optional)</label><input type="date" class="form-control" name="expiry_date"></div>
+                        <div class="col-md-12"><label class="form-label">Change Summary / Notes</label><textarea class="form-control" name="change_summary" rows="2"></textarea></div>
+                        <div class="col-md-12"><label class="form-label">Upload File (PDF/DOC/IMG) *</label><input type="file" class="form-control" name="file" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Upload (Draft)</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("uploadForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/docs/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+
+async function updateStatus(id, status) {
+    if(!confirm(`Are you sure you want to mark this document as ${status}?`)) return;
+    const formData = new URLSearchParams();
+    formData.append("document_id", id);
+    formData.append("status", status);
+    
+    const res = await fetch("/admin/api/docs/status", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+}
+
+document.querySelectorAll('.submit-review-btn').forEach(btn => btn.addEventListener('click', () => updateStatus(btn.dataset.id, 'Pending Review')));
+document.querySelectorAll('.approve-doc-btn').forEach(btn => btn.addEventListener('click', () => updateStatus(btn.dataset.id, 'Approved')));
+document.querySelectorAll('.reject-doc-btn').forEach(btn => btn.addEventListener('click', () => updateStatus(btn.dataset.id, 'Rejected')));
+document.querySelectorAll('.publish-doc-btn').forEach(btn => btn.addEventListener('click', () => updateStatus(btn.dataset.id, 'Published')));
+</script>
+{% endblock %}

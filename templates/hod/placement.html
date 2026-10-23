@@ -1,0 +1,36 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Placement Summary{% endblock %}
+{% block page_title %}Training & Placement{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Department Placement Stats</h5></div>
+        <div class="card-body" id="placementBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/placement", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("placementBody");
+    
+    if(data.stats.length === 0) {
+        body.innerHTML = '<div class="alert alert-info text-center">No placement data available for your department.</div>';
+        return;
+    }
+
+    let html = '<div class="row g-4">';
+    data.stats.forEach(s => {
+        let color = s.status === 'Selected' ? 'success' : (s.status === 'Rejected' ? 'danger' : 'primary');
+        html += `<div class="col-md-3"><div class="card border-0 shadow-sm rounded-4 p-3 bg-${color} text-white h-100 text-center"><h2 class="mb-0">${s.count}</h2><p class="mb-0 opacity-75 small">${s.status}</p></div></div>`;
+    });
+    html += '</div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Teacher Panel{% endblock %} - SGI Command Center</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+        rel="stylesheet"
+    >
+
+    <!-- AOS Animation -->
+    <link
+        href="https://unpkg.com/aos@2.3.1/dist/aos.css"
+        rel="stylesheet"
+    >
+
+    <!-- Global CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+
+    <style>
+
+
+        /* =========================================================
+           TEACHER SIDEBAR - PROFESSIONAL DROPDOWN NAVIGATION
+           ========================================================= */
+
+
+
+        /* =========================================================
+           MAIN SIDEBAR
+           ========================================================= */
+
+
+
+
+
+        /* =========================================================
+           BRAND
+           ========================================================= */
+
+
+
+        .teacher-brand-logo {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .teacher-brand-full {
+            display: block;
+            color: #fff !important;
+            font-size: 25px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: .5px;
+            white-space: nowrap;
+            transition: opacity .25s ease, transform .25s ease;
+        }
+
+        .teacher-brand-mini {
+            display: none;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 11px;
+            background: rgba(255,255,255,.10);
+            border: 1px solid rgba(255,255,255,.15);
+            color: #fff;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.20);
+        }
+
+        .teacher-brand-panel {
+            margin: 7px 0 0 !important;
+            color: rgba(255,255,255,.68) !important;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.35px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+
+
+
+
+
+
+        /* =========================================================
+           NAVIGATION WRAPPER
+           ========================================================= */
+
+
+
+
+
+        /* =========================================================
+           TOP-LEVEL LINKS / DROPDOWN HEADERS
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+
+        .teacher-nav-label {
+            display: inline-block;
+            opacity: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: opacity .2s ease, width .3s ease;
+        }
+
+        /* =========================================================
+           DROPDOWN ARROW
+           ========================================================= */
+
+        .teacher-dropdown-toggle {
+            cursor: pointer;
+        }
+
+        .teacher-dropdown-arrow {
+            margin-left: auto !important;
+            margin-right: 2px !important;
+            font-size: 11px !important;
+            width: auto !important;
+            min-width: auto !important;
+            flex: 0 0 auto !important;
+            transition: transform .25s ease, opacity .2s ease;
+        }
+
+        .teacher-dropdown-toggle[aria-expanded="true"] {
+            background: var(--teacher-sidebar-active);
+            color: #fff !important;
+        }
+
+        .teacher-dropdown-toggle[aria-expanded="true"] .teacher-dropdown-arrow {
+            transform: rotate(90deg);
+        }
+
+        /* =========================================================
+           DROPDOWN CONTAINER
+           ========================================================= */
+
+        .teacher-submenu {
+            margin: 3px 0 6px 12px;
+            padding: 4px 0 5px 10px;
+            border-left: 1px solid rgba(255,255,255,.12);
+            background: rgba(0,0,0,.10);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .teacher-submenu .nav-item {
+            width: 100%;
+        }
+
+        .teacher-submenu .nav-link {
+            min-height: 38px;
+            padding: 8px 10px;
+            margin: 1px 0;
+            border-radius: 7px;
+            color: rgba(255,255,255,.66) !important;
+            font-size: 12.5px;
+            font-weight: 450;
+        }
+
+        .teacher-submenu .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255,255,255,.07);
+        }
+
+        .teacher-submenu .nav-link > i:first-child {
+            width: 17px;
+            min-width: 17px;
+            margin-right: 9px !important;
+            font-size: 14px;
+            color: rgba(255,255,255,.58);
+        }
+
+        .teacher-submenu .nav-link:hover > i:first-child {
+            color: #fff;
+        }
+
+        .teacher-submenu .nav-link.active {
+            color: #fff !important;
+            background: rgba(13,110,253,.18);
+        }
+
+        .teacher-submenu .nav-link.active > i:first-child {
+            color: #6ea8fe;
+        }
+
+        /* =========================================================
+           CATEGORY LABELS
+           ========================================================= */
+
+
+
+
+
+
+
+        /* =========================================================
+           COLLAPSED DESKTOP SIDEBAR
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* =========================================================
+           COLLAPSED TOOLTIPS
+           ========================================================= */
+
+
+
+
+
+        /* =========================================================
+           LOGOUT
+           ========================================================= */
+
+
+
+
+
+        /* =========================================================
+           SIDEBAR OVERLAY
+           ========================================================= */
+
+
+
+
+
+        /* =========================================================
+           CONTENT
+           ========================================================= */
+
+
+
+        /* =========================================================
+           TOGGLE BUTTON
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+        /* =========================================================
+           MOBILE
+           ========================================================= */
+
+
+
+        @media (max-width: 575px) {
+
+
+
+
+            header {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            main {
+                padding: 14px !important;
+            }
+
+}
+
+        /* =========================================================
+           SCROLLBAR
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+</style>
+</head>
+
+
+<body class="bg-light">
+
+    <div class="wrapper d-flex">
+
+
+        <!-- =====================================================
+             TEACHER SIDEBAR
+             ===================================================== -->
+
+        <nav
+            class="sidebar teacher-sidebar bg-dark text-white"
+            id="sidebar"
+            aria-label="Teacher Navigation"
+        >
+
+            <!-- =====================================================
+                 BRAND
+                 ===================================================== -->
+
+            <div class="teacher-sidebar-brand">
+
+                <div class="teacher-brand-logo">
+
+                    <span class="teacher-brand-full">
+                        SGI CMS
+                    </span>
+
+                    <span class="teacher-brand-mini">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </span>
+
+                </div>
+
+                <p class="teacher-brand-panel">
+                    TEACHER PANEL
+                </p>
+
+            </div>
+
+
+            <ul class="nav flex-column">
+
+                <!-- =================================================
+                     DASHBOARD
+                     ================================================= -->
+
+                <li class="nav-item">
+                    <a
+                        class="nav-link text-white"
+                        href="/teacher/dashboard"
+                        data-tooltip="Dashboard"
+                    >
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="teacher-nav-label">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="teacher-sidebar-category">AI Intelligence</li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/teacher/ai-assistant" data-tooltip="AI Assistant">
+                        <i class="bi bi-robot"></i>
+                        <span class="teacher-nav-label">AI Command Center</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/teacher/ai-tools" data-tooltip="AI Teaching Tools">
+                        <i class="bi bi-magic"></i>
+                        <span class="teacher-nav-label">AI Teaching Tools</span>
+                    </a>
+                </li>
+
+
+                <!-- =================================================
+                     ACADEMIC MANAGEMENT
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Academic Management</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#academicMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="academicMenu"
+                        data-tooltip="Academic Management"
+                    >
+                        <i class="bi bi-mortarboard"></i>
+                        <span class="teacher-nav-label">Academic Management</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="academicMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/subjects">
+                                    <i class="bi bi-journal-bookmark"></i>
+                                    <span>My Subjects</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/students">
+                                    <i class="bi bi-people"></i>
+                                    <span>My Students</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/timetable">
+                                    <i class="bi bi-calendar-week"></i>
+                                    <span>My Timetable</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+                <!-- =================================================
+                     TEACHING & LEARNING
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Teaching & Learning</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#teachingMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="teachingMenu"
+                        data-tooltip="Teaching & Learning"
+                    >
+                        <i class="bi bi-book-half"></i>
+                        <span class="teacher-nav-label">Teaching & Learning</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="teachingMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/lesson-planner">
+                                    <i class="bi bi-journal-richtext"></i>
+                                    <span>Lesson Planner</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/syllabus">
+                                    <i class="bi bi-list-check"></i>
+                                    <span>Syllabus Tracker</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/assignments">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    <span>Assignments</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/question-bank">
+                                    <i class="bi bi-collection"></i>
+                                    <span>Question Bank</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+                <!-- =================================================
+                     ATTENDANCE
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Attendance</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#attendanceMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="attendanceMenu"
+                        data-tooltip="Attendance"
+                    >
+                        <i class="bi bi-calendar-check"></i>
+                        <span class="teacher-nav-label">Attendance</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="attendanceMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/attendance">
+                                    <i class="bi bi-pencil-square"></i>
+                                    <span>Mark Attendance</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/attendance/history">
+                                    <i class="bi bi-clock-history"></i>
+                                    <span>History &amp; Analytics</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+
+                <li class="teacher-sidebar-category">Assessment &amp; Analytics</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#assessmentMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="assessmentMenu"
+                        data-tooltip="Assessment & Analytics"
+                    >
+                        <i class="bi bi-clipboard-data"></i>
+                        <span class="teacher-nav-label">Assessment &amp; Analytics</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="assessmentMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/marks">
+                                    <i class="bi bi-journal-text"></i>
+                                    <span>Marks Entry</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/assessment-analytics">
+                                    <i class="bi bi-graph-up"></i>
+                                    <span>Assessment Analytics</span>
+                                </a>
+                            </li>
+
+                            <li class="teacher-sidebar-category">Intelligence</li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="/teacher/analytics" data-tooltip="Analytics">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                    <span class="teacher-nav-label">Teaching Analytics</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="/teacher/risk-dashboard" data-tooltip="Risk Dashboard">
+                                    <i class="bi bi-shield-exclamation"></i>
+                                    <span class="teacher-nav-label">Risk Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="/teacher/academic-reports" data-tooltip="Reports">
+                                    <i class="bi bi-file-earmark-bar-graph"></i>
+                                    <span class="teacher-nav-label">Academic Reports</span>
+                                </a>
+                            </li>
+
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+
+                <!-- =================================================
+                     STUDENT SUCCESS
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Student Success</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#studentSuccessMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="studentSuccessMenu"
+                        data-tooltip="Student Success"
+                    >
+                        <i class="bi bi-person-check"></i>
+                        <span class="teacher-nav-label">Student Success</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="studentSuccessMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/risk-indicators">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <span>Academic Risk</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+                <!-- =================================================
+                     FACULTY OPERATIONS
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Faculty Operations</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#facultyMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="facultyMenu"
+                        data-tooltip="Faculty Operations"
+                    >
+                        <i class="bi bi-briefcase"></i>
+                        <span class="teacher-nav-label">Faculty Operations</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="facultyMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/workload">
+                                    <i class="bi bi-bar-chart"></i>
+                                    <span>My Workload</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/timetable/conflicts">
+                                    <i class="bi bi-calendar-x"></i>
+                                    <span>Timetable Conflicts</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+                <!-- =================================================
+                     COMMUNICATION
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Communication</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#communicationMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="communicationMenu"
+                        data-tooltip="Communication"
+                    >
+                        <i class="bi bi-chat-square-text"></i>
+                        <span class="teacher-nav-label">Communication</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="communicationMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/notices">
+                                    <i class="bi bi-megaphone"></i>
+                                    <span>Notices</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/meetings">
+                                    <i class="bi bi-people"></i>
+                                    <span>Meetings &amp; Actions</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+                <!-- =================================================
+                     GOVERNANCE
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Governance</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#governanceMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="governanceMenu"
+                        data-tooltip="Governance"
+                    >
+                        <i class="bi bi-shield-check"></i>
+                        <span class="teacher-nav-label">Governance</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="governanceMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/notifications">
+                                    <i class="bi bi-bell"></i>
+                                    <span>Notifications</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/audit">
+                                    <i class="bi bi-clock-history"></i>
+                                    <span>My Activity</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+
+                <!-- =================================================
+                     ADMINISTRATION
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Administration</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#administrationMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="administrationMenu"
+                        data-tooltip="Administration"
+                    >
+                        <i class="bi bi-building-gear"></i>
+                        <span class="teacher-nav-label">Administration</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="administrationMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/teacher/leaves">
+                                    <i class="bi bi-calendar2-plus"></i>
+                                    <span>Apply for Leave</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+
+                <!-- =================================================
+                     ACCOUNT
+                     ================================================= -->
+
+                <li class="teacher-sidebar-category">Account</li>
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link text-white teacher-dropdown-toggle"
+                        data-bs-toggle="collapse"
+                        href="#accountMenu"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="accountMenu"
+                        data-tooltip="Account"
+                    >
+                        <i class="bi bi-person-circle"></i>
+                        <span class="teacher-nav-label">Account</span>
+                        <i class="bi bi-chevron-right teacher-dropdown-arrow"></i>
+                    </a>
+
+                    <div class="collapse" id="accountMenu">
+
+                        <ul class="nav flex-column teacher-submenu">
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="/profile">
+                                    <i class="bi bi-person-gear"></i>
+                                    <span>My Profile</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a
+                                    class="nav-link text-danger"
+                                    href="#"
+                                    onclick="logout(); return false;"
+                                >
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+
+        <!-- =====================================================
+             SIDEBAR OVERLAY
+             ===================================================== -->
+
+        <div
+            class="sidebar-overlay"
+            id="sidebarOverlay"
+        ></div>
+
+
+        <!-- =====================================================
+             MAIN CONTENT
+             ===================================================== -->
+
+        <div class="content flex-grow-1">
+
+
+            <!-- =================================================
+                 HEADER
+                 ================================================= -->
+
+            <header
+                class="navbar navbar-light bg-white shadow-sm px-4 py-3 d-flex justify-content-between align-items-center"
+            >
+
+                <!-- Left Header -->
+
+                <div class="d-flex align-items-center">
+
+                    <button
+                        id="sidebarToggle"
+                        class="btn me-3"
+                        type="button"
+                        aria-label="Toggle sidebar"
+                        title="Toggle sidebar"
+                    >
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+
+
+                    <h5 class="mb-0 text-primary-custom">
+
+                        {% block page_title %}
+                            Dashboard
+                        {% endblock %}
+
+                    </h5>
+
+                </div>
+
+
+                <!-- Right Header -->
+
+                <div class="d-flex align-items-center gap-3">
+
+
+                    <!-- User Details -->
+
+                    <div class="text-end d-none d-md-block">
+
+                        <div class="text-muted small fw-normal">
+
+                            <span id="navTime">
+                                --:--:--
+                            </span>
+
+                            |
+
+                            <span id="navDate">
+                                Loading...
+                            </span>
+
+                        </div>
+
+
+                        <div class="fw-bold text-dark">
+
+                            <span id="navGreeting">
+                                Welcome
+                            </span>,
+
+                            <span id="navUserName">
+                                User
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Profile Image -->
+
+                    <img
+                        id="navUserImg"
+                        src="/static/images/default.png"
+                        alt="Profile"
+                        class="rounded-circle border"
+                        width="40"
+                        height="40"
+                        style="object-fit: cover;"
+                    >
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================================
+                 PAGE CONTENT
+                 ================================================= -->
+
+            <main class="p-4">
+
+                {% block content %}
+                {% endblock %}
+
+            </main>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         BOOTSTRAP JS
+         ========================================================= -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+    ></script>
+
+
+    <!-- =========================================================
+         AOS JS
+         ========================================================= -->
+
+    <script
+        src="https://unpkg.com/aos@2.3.1/dist/aos.js"
+    ></script>
+
+
+    <script>
+
+        /* =========================================================
+           AOS
+           ========================================================= */
+
+        AOS.init();
+
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const sidebar =
+                document.getElementById("sidebar");
+
+            const toggleBtn =
+                document.getElementById("sidebarToggle");
+
+            const overlay =
+                document.getElementById("sidebarOverlay");
+
+            const STORAGE_KEY =
+                "erpSidebarCollapsed";
+
+            // Preserve the open accordion section and sidebar scroll position
+            // when a teacher navigates between pages.
+            const OPEN_DROPDOWN_KEY = "teacherSidebarOpenDropdown";
+            const SCROLL_POSITION_KEY = "teacherSidebarScrollTop";
+
+            function safeStorageGet(key) {
+                try {
+                    return window.localStorage.getItem(key);
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            function safeStorageSet(key, value) {
+                try {
+                    window.localStorage.setItem(key, String(value));
+                } catch (_) {
+                    // Sidebar navigation must continue to work if storage is unavailable.
+                }
+            }
+
+            function getOpenDropdownId() {
+                const openMenu = sidebar
+                    ? sidebar.querySelector(".collapse.show[id]")
+                    : null;
+                return openMenu ? openMenu.id : "";
+            }
+
+            function saveSidebarPosition() {
+                if (!sidebar) return;
+                safeStorageSet(SCROLL_POSITION_KEY, sidebar.scrollTop || 0);
+
+                // Prefer the menu containing the clicked feature. Otherwise keep
+                // the currently open menu (if any).
+                const openId = getOpenDropdownId();
+                if (openId) {
+                    safeStorageSet(OPEN_DROPDOWN_KEY, openId);
+                }
+            }
+
+            const dropdownLinks =
+                document.querySelectorAll(".teacher-dropdown-toggle");
+
+            const desktop =
+                () => window.innerWidth > 991;
+
+
+            /* ---------------------------------------------------------
+               RESTORE DESKTOP SIDEBAR STATE
+               --------------------------------------------------------- */
+
+            if (desktop()) {
+
+                const savedState =
+                    localStorage.getItem(STORAGE_KEY);
+
+                if (savedState === "true") {
+                    sidebar.classList.add("collapsed");
+                }
+
+            }
+
+
+            /* ---------------------------------------------------------
+               DROPDOWN STATE PERSISTENCE
+               --------------------------------------------------------- */
+
+            if (sidebar) {
+                sidebar.querySelectorAll(".collapse[id]").forEach(function (menu) {
+                    menu.addEventListener("shown.bs.collapse", function () {
+                        safeStorageSet(OPEN_DROPDOWN_KEY, menu.id);
+                        // Restore scroll after Bootstrap has expanded the menu.
+                        const savedScroll = Number.parseInt(
+                            safeStorageGet(SCROLL_POSITION_KEY) || "0",
+                            10
+                        );
+                        if (Number.isFinite(savedScroll)) {
+                            sidebar.scrollTop = savedScroll;
+                        }
+                    });
+
+                    menu.addEventListener("hidden.bs.collapse", function () {
+                        if (safeStorageGet(OPEN_DROPDOWN_KEY) === menu.id) {
+                            safeStorageSet(OPEN_DROPDOWN_KEY, "");
+                        }
+                    });
+                });
+
+                // Save state before a submenu feature navigates to another page.
+                sidebar.addEventListener("click", function (event) {
+                    const link = event.target.closest("a[href]");
+                    if (!link || !sidebar.contains(link)) return;
+
+                    if (link.classList.contains("teacher-dropdown-toggle")) return;
+                    if (link.getAttribute("href") === "#") return;
+
+                    const containingMenu = link.closest(".collapse[id]");
+                    if (containingMenu) {
+                        safeStorageSet(OPEN_DROPDOWN_KEY, containingMenu.id);
+                    }
+                    saveSidebarPosition();
+                }, true);
+
+                // Also capture scroll position if the user scrolls without navigating.
+                sidebar.addEventListener("scroll", function () {
+                    safeStorageSet(SCROLL_POSITION_KEY, sidebar.scrollTop || 0);
+                }, { passive: true });
+
+                window.addEventListener("pagehide", saveSidebarPosition);
+            }
+
+
+            /* ---------------------------------------------------------
+               DROPDOWN BEHAVIOUR
+               --------------------------------------------------------- */
+
+            dropdownLinks.forEach(function (link) {
+
+                link.addEventListener("click", function (event) {
+
+                    /*
+                     * If the desktop sidebar is collapsed, expand it
+                     * instead of opening an invisible submenu.
+                     */
+                    if (desktop() && sidebar.classList.contains("collapsed")) {
+
+                        event.preventDefault();
+
+                        sidebar.classList.remove("collapsed");
+
+                        localStorage.setItem(
+                            STORAGE_KEY,
+                            "false"
+                        );
+
+                        return;
+                    }
+
+
+                    /*
+                     * Desktop uses accordion-style behaviour:
+                     * opening one section closes the others.
+                     */
+                    if (desktop()) {
+
+                        document
+                            .querySelectorAll(".teacher-dropdown-toggle")
+                            .forEach(function (otherLink) {
+
+                                if (otherLink !== link) {
+
+                                    const otherTarget =
+                                        otherLink.getAttribute("href");
+
+                                    const otherMenu =
+                                        document.querySelector(otherTarget);
+
+                                    if (
+                                        otherMenu &&
+                                        otherMenu.classList.contains("show")
+                                    ) {
+
+                                        const instance =
+                                            bootstrap.Collapse.getOrCreateInstance(
+                                                otherMenu,
+                                                { toggle: false }
+                                            );
+
+                                        instance.hide();
+
+                                    }
+
+                                }
+
+                            });
+
+                    }
+
+                });
+
+            });
+
+
+            /* ---------------------------------------------------------
+               TOGGLE BUTTON
+               --------------------------------------------------------- */
+
+            if (toggleBtn) {
+
+                toggleBtn.addEventListener("click", function () {
+
+                    if (desktop()) {
+
+                        sidebar.classList.toggle("collapsed");
+
+                        localStorage.setItem(
+                            STORAGE_KEY,
+                            sidebar.classList.contains("collapsed")
+                        );
+
+                    }
+
+                    else {
+
+                        sidebar.classList.toggle("show");
+
+                        if (overlay) {
+                            overlay.classList.toggle("show");
+                        }
+
+                    }
+
+                });
+
+            }
+
+
+            /* ---------------------------------------------------------
+               OVERLAY CLICK
+               --------------------------------------------------------- */
+
+            if (overlay) {
+
+                overlay.addEventListener("click", function () {
+
+                    sidebar.classList.remove("show");
+                    overlay.classList.remove("show");
+
+                });
+
+            }
+
+
+            /* ---------------------------------------------------------
+               RESIZE HANDLING
+               --------------------------------------------------------- */
+
+            window.addEventListener("resize", function () {
+
+                if (desktop()) {
+
+                    sidebar.classList.remove("show");
+
+                    if (overlay) {
+                        overlay.classList.remove("show");
+                    }
+
+                    const savedState =
+                        localStorage.getItem(STORAGE_KEY);
+
+                    if (savedState === "true") {
+                        sidebar.classList.add("collapsed");
+                    }
+                    else {
+                        sidebar.classList.remove("collapsed");
+                    }
+
+                }
+
+                else {
+
+                    sidebar.classList.remove("collapsed");
+
+                }
+
+            });
+
+            /* ---------------------------------------------------------
+               RESTORE DROPDOWN + SCROLL POSITION
+               --------------------------------------------------------- */
+
+            if (sidebar) {
+                const savedMenuId = safeStorageGet(OPEN_DROPDOWN_KEY);
+                const savedScroll = Number.parseInt(
+                    safeStorageGet(SCROLL_POSITION_KEY) || "0",
+                    10
+                );
+
+                if (savedMenuId) {
+                    const savedMenu = document.getElementById(savedMenuId);
+                    if (savedMenu && sidebar.contains(savedMenu) && savedMenu.classList.contains("collapse")) {
+                        const savedToggle = sidebar.querySelector(
+                            '.teacher-dropdown-toggle[href="#' + savedMenuId + '"]'
+                        );
+                        if (savedToggle) {
+                            savedToggle.setAttribute("aria-expanded", "true");
+                        }
+
+                        // Restore exactly one menu to preserve accordion behavior.
+                        sidebar.querySelectorAll(".collapse.show").forEach(function (openMenu) {
+                            if (openMenu !== savedMenu) {
+                                bootstrap.Collapse.getOrCreateInstance(
+                                    openMenu,
+                                    { toggle: false }
+                                ).hide();
+                            }
+                        });
+
+                        bootstrap.Collapse.getOrCreateInstance(
+                            savedMenu,
+                            { toggle: false }
+                        ).show();
+                    }
+                }
+
+                function restoreSidebarScroll() {
+                    if (Number.isFinite(savedScroll) && savedScroll >= 0) {
+                        sidebar.scrollTop = savedScroll;
+                    }
+                }
+
+                // Restore now and after Bootstrap's collapse animation completes.
+                restoreSidebarScroll();
+                const menuToRestore = savedMenuId
+                    ? document.getElementById(savedMenuId)
+                    : null;
+                if (menuToRestore) {
+                    menuToRestore.addEventListener(
+                        "shown.bs.collapse",
+                        restoreSidebarScroll,
+                        { once: true }
+                    );
+                }
+                window.requestAnimationFrame(restoreSidebarScroll);
+            }
+
+        });
+
+
+        /* =========================================================
+           LOGOUT
+           ========================================================= */
+
+        function logout() {
+
+            localStorage.removeItem("access_token");
+
+            window.location.href = "/login";
+
+        }
+
+
+        /* =========================================================
+           LOAD TEACHER USER INFORMATION
+           ========================================================= */
+
+        async function loadUserInfo() {
+
+            const token =
+                localStorage.getItem("access_token");
+
+
+            if (!token) {
+
+                window.location.href = "/login";
+
+                return;
+
+            }
+
+
+            try {
+
+                const res =
+                    await fetch(
+                        "/teacher/api/me",
+                        {
+                            headers: {
+                                "Authorization":
+                                    "Bearer " + token
+                            }
+                        }
+                    );
+
+
+                if (res.ok) {
+
+                    const data =
+                        await res.json();
+
+
+                    /* Greeting */
+
+                    const greeting =
+                        document.getElementById(
+                            "navGreeting"
+                        );
+
+                    if (greeting) {
+
+                        greeting.textContent =
+                            data.greeting || "Welcome";
+
+                    }
+
+
+                    /* User Name */
+
+                    const userName =
+                        document.getElementById(
+                            "navUserName"
+                        );
+
+                    if (userName) {
+
+                        userName.textContent =
+                            data.full_name || "User";
+
+                    }
+
+
+                    /* Date */
+
+                    const date =
+                        document.getElementById(
+                            "navDate"
+                        );
+
+                    if (date) {
+
+                        date.textContent =
+                            data.current_date || "";
+
+                    }
+
+
+                    /* Profile Image */
+
+                    const userImg =
+                        document.getElementById(
+                            "navUserImg"
+                        );
+
+                    if (
+                        userImg &&
+                        data.profile_image
+                    ) {
+
+                        userImg.src =
+                            "/static/images/" +
+                            data.profile_image;
+
+                    }
+
+                }
+
+            }
+
+            catch (e) {
+
+                /*
+                 * Intentionally silent.
+                 * Existing dashboard remains usable.
+                 */
+
+            }
+
+        }
+
+
+        /* =========================================================
+           LIVE CLOCK
+           ========================================================= */
+
+        function updateClock() {
+
+            const now =
+                new Date();
+
+
+            let h =
+                now.getHours();
+
+
+            const m =
+                String(
+                    now.getMinutes()
+                ).padStart(2, "0");
+
+
+            const s =
+                String(
+                    now.getSeconds()
+                ).padStart(2, "0");
+
+
+            const ampm =
+                h >= 12
+                    ? "PM"
+                    : "AM";
+
+
+            h =
+                h % 12;
+
+
+            h =
+                h
+                    ? h
+                    : 12;
+
+
+            const el =
+                document.getElementById(
+                    "navTime"
+                );
+
+
+            if (el) {
+
+                el.textContent =
+                    `${h}:${m}:${s} ${ampm}`;
+
+            }
+
+        }
+
+
+        /* =========================================================
+           INITIALIZE HEADER
+           ========================================================= */
+
+        loadUserInfo();
+
+        updateClock();
+
+        setInterval(
+            updateClock,
+            1000
+        );
+
+    </script>
+
+
+    <!-- =========================================================
+         PAGE-SPECIFIC JAVASCRIPT
+         ========================================================= -->
+
+    {% block custom_js %}
+    {% endblock %}
+
+    <script src="/static/js/sidebar.js" defer></script>
+</body>
+
+</html>

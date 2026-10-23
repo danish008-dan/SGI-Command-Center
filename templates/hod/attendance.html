@@ -1,0 +1,64 @@
+<!-- templates/hod/attendance.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Attendance Monitoring{% endblock %}
+{% block page_title %}Department Attendance{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="attendanceContainer">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading Attendance Data...</p></div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadAttendance() {
+    try {
+        const res = await fetch("/hod/api/attendance", { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+
+        const container = document.getElementById("attendanceContainer");
+        const s = data.stats;
+
+        container.innerHTML = `
+            <div class="row g-4 mb-4">
+                <div class="col-md-6" data-aos="zoom-in">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100">
+                        <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Department Average</p><h2 class="mb-0">${s.avg_attendance}%</h2></div><i class="bi bi-graph-up fs-1 opacity-50"></i></div>
+                    </div>
+                </div>
+                <div class="col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 ${s.low_attendance_count > 0 ? 'bg-danger' : 'bg-success'} text-white h-100">
+                        <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">At-Risk Students (<75%)</p><h2 class="mb-0">${s.low_attendance_count}</h2></div><i class="bi bi-exclamation-triangle-fill fs-1 opacity-50"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12" data-aos="fade-up">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3"><h5 class="mb-0">Low Attendance List (Below 75%)</h5></div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light"><tr><th>Enrollment No</th><th>Student Name</th><th>Semester</th><th class="text-center">Attendance %</th></tr></thead>
+                                    <tbody>
+                                        ${data.low_attendance_students.map(st => `<tr><td>${st.enrollment_no}</td><td>${st.full_name}</td><td>${st.semester}</td><td class="text-center fw-bold text-danger">${st.percentage}%</td></tr>`).join('') || '<tr><td colspan="4" class="text-center text-success py-4">No students below 75% attendance. Great job!</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch(err) {
+        document.getElementById("attendanceContainer").innerHTML = `<div class="alert alert-danger">Error loading attendance data.</div>`;
+    }
+}
+loadAttendance();
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+<!-- templates/admin/departments.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Department Management{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Departments</p>
+                <h3 class="cmd-stat-value">{{ stats.total }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Active</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.active }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Inactive</p>
+                <h3 class="cmd-stat-value text-danger">{{ stats.inactive }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">HOD Assigned</p>
+                <h3 class="cmd-stat-value text-primary">{{ stats.hod_assigned }} / {{ stats.total }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table & Add Form -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Department List</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+                <i class="bi bi-plus-circle me-1"></i> Add Department
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Department Name</th>
+                            <th>HOD</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in departments %}
+                        <tr>
+                            <td class="fw-bold">{{ d.department_code }}</td>
+                            <td>{{ d.department_name }}</td>
+                            <td>{{ d.hod_name or '-' }}</td>
+                            <td>
+                                <span class="badge {% if d.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ d.status }}</span>
+                            </td>
+                            <td>{{ d.created_at.strftime('%d %b, %Y') }}</td>
+                            <td>
+                                <a href="/admin/departments/{{ d.department_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No departments found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addDeptForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Department Name *</label>
+                            <input type="text" class="form-control" name="department_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department Code *</label>
+                            <input type="text" class="form-control" name="department_code" placeholder="e.g. CSE" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Short Name</label>
+                            <input type="text" class="form-control" name="short_name" placeholder="e.g. CS">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="Active" selected>Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("addDeptForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const btn = this.querySelector("button[type=submit]");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+    try {
+        const res = await fetch("/admin/departments/add", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Save Department';
+        }
+    } catch (err) {
+        alert("Network Error");
+        btn.disabled = false;
+        btn.innerHTML = 'Save Department';
+    }
+});
+</script>
+{% endblock %}

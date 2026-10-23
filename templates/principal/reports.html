@@ -1,0 +1,61 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}Executive Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+{% block content %}
+<div class="container-fluid" id="reportsDashboard">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/principal/api/reports", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const c = document.getElementById("reportsDashboard");
+    const s = data.stats, a = data.academic, f = data.finance, h = data.hr, cam = data.campus;
+    
+    c.innerHTML = `
+        <div class="alert alert-info shadow-sm" data-aos="fade-down">
+            <h5 class="mb-1"><i class="bi bi-file-earmark-bar-graph"></i> Executive Summary Report</h5>
+            <p class="mb-0 small">Consolidated view of institutional health. Ready for review or export.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-xl-4" data-aos="zoom-in">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white"><h6 class="mb-0 text-primary">General & Academic</h6></div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">Total Students: <b>${s.students}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Total Faculty: <b>${s.teachers}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Avg Attendance: <b>${a.avg_attendance}%</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Avg CGPA: <b>${a.avg_cgpa}</b></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white"><h6 class="mb-0 text-success">Finance & HR</h6></div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">Total Demand: <b>₹${f.demand.toLocaleString()}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Collected: <b>₹${f.collected.toLocaleString()}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Outstanding: <b class="text-danger">₹${f.outstanding.toLocaleString()}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Total Workforce: <b>${h.total_workforce}</b></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white"><h6 class="mb-0 text-warning">Campus & Compliance</h6></div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">Active Assets: <b>${cam.active_assets}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Hostel Occupancy: <b>${cam.hostel_occupancy}%</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Pending Compliance: <b class="text-warning">${s.pending_compliance}</b></li>
+                        <li class="list-group-item d-flex justify-content-between">Overdue Compliance: <b class="text-danger">${s.pending_compliance}</b></li>
+                    </ul>
+                </div>
+            </div>
+        </div>`;
+    AOS.init();
+}
+loadData();
+</script>
+{% endblock %}

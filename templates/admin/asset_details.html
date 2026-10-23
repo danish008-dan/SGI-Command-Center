@@ -1,0 +1,117 @@
+<!-- templates/admin/asset_details.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Asset: {{ asset.asset_code }}{% endblock %}
+{% block page_title %}Asset: {{ asset.name }} ({{ asset.asset_code }}){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/assets" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Register
+            </a>
+            <div>
+                <h4 class="mb-0">{{ asset.name }}</h4>
+                <small class="text-muted">Asset Code: {{ asset.asset_code }} |
+                    Status: <span class="badge bg-{% if asset.lifecycle_status == 'Active' or asset.lifecycle_status == 'Allocated' %}success{% else %}danger{% endif %}">{{ asset.lifecycle_status }}</span>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Left Column: Asset Info -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3"><h6 class="mb-0">Asset Information</h6></div>
+                <div class="card-body p-3">
+                    <p><strong>Category:</strong> {{ asset.category_name }}</p>
+                    <p><strong>Serial No:</strong> {{ asset.serial_number or '-' }}</p>
+                    <p><strong>Condition:</strong> {{ asset.condition_status }}</p>
+                    <p><strong>Supplier:</strong> {{ asset.supplier or '-' }}</p>
+                    <p><strong>Acquisition Date:</strong> {{ asset.acquisition_date or '-' }}</p>
+                    <p><strong>Cost:</strong> ₹{{ "%.2f"|format(asset.acquisition_cost or 0) }}</p>
+
+                    <!-- QR Code Display -->
+                                        <!-- QR Code Display -->
+                    {% if asset.asset_code %}
+                    <hr>
+                    <div class="text-center">
+                        <img src="/static/uploads/qrcodes/{{ asset.asset_code }}.png" alt="QR Code" class="img-fluid rounded" style="max-width: 150px;">
+                        <p class="small text-muted mt-1">Asset Lookup QR</p>
+                        <!-- NEW: Production Note -->
+                        <div class="alert alert-info p-2 small mt-2" role="alert">
+                            <i class="bi bi-info-circle-fill"></i> <strong>Note:</strong> This is a dummy QR code for display. In production, scanning this QR will open the authorized asset detail page directly.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: History Tabs -->
+        <div class="col-md-8">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#allocations">Allocation History</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#maintenance">Maintenance History</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Allocation History Tab -->
+                <div class="tab-pane fade show active" id="allocations">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr><th>Date</th><th>Custodian</th><th>Dept/Room</th><th>Allocated By</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for a in allocations %}
+                                    <tr>
+                                        <td>{{ a.allocation_date }}</td>
+                                        <td>{{ a.custodian_name or '-' }}</td>
+                                        <td>{{ a.department_name or a.room_number or '-' }}</td>
+                                        <td>{{ a.allocated_by_name }}</td>
+                                        <td><span class="badge bg-{% if a.status == 'Active' %}success{% else %}secondary{% endif %}">{{ a.status }}</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="5" class="text-center text-muted py-3">No allocation history.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maintenance History Tab -->
+                <div class="tab-pane fade" id="maintenance">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr><th>Date</th><th>Issue</th><th>Priority</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for m in maintenance_reqs %}
+                                    <tr>
+                                        <td>{{ m.created_at }}</td>
+                                        <td>{{ m.issue_description }}</td>
+                                        <td><span class="badge bg-{% if m.priority == 'High' %}danger{% elif m.priority == 'Medium' %}warning{% else %}info{% endif %}">{{ m.priority }}</span></td>
+                                        <td><span class="badge bg-{% if m.status == 'Resolved' %}success{% elif m.status == 'In Progress' %}primary{% else %}secondary{% endif %}">{{ m.status }}</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="4" class="text-center text-muted py-3">No maintenance history.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

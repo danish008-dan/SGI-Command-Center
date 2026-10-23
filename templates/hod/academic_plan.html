@@ -1,0 +1,49 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Academic Plan{% endblock %}
+{% block page_title %}Curriculum Structure{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Semester-wise Subjects</h5></div>
+        <div class="card-body" id="planBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/academic-plan", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("planBody");
+    
+    if(data.subjects.length === 0) {
+        body.innerHTML = '<p class="text-center text-muted py-4">No active subjects found.</p>';
+        return;
+    }
+
+    // Group by semester
+    const semesters = {};
+    data.subjects.forEach(s => {
+        if(!semesters[s.semester]) semesters[s.semester] = [];
+        semesters[s.semester].push(s);
+    });
+
+    let html = '';
+    for(const [sem, subs] of Object.entries(semesters)) {
+        html += `<h6 class="mt-3 text-primary">Semester ${sem}</h6>`;
+        html += `<div class="table-responsive mb-4"><table class="table table-sm table-bordered">
+            <thead class="table-light"><tr><th>Code</th><th>Subject Name</th><th>Type</th><th class="text-center">Credits</th><th class="text-center">Hrs/Week</th></tr></thead>
+            <tbody>`;
+        subs.forEach(s => {
+            html += `<tr><td>${s.subject_code}</td><td>${s.subject_name}</td><td>${s.subject_type}</td><td class="text-center">${s.credits}</td><td class="text-center">${s.classes_per_week}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+    }
+    
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

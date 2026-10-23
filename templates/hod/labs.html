@@ -1,0 +1,31 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Labs & Assets{% endblock %}
+{% block page_title %}Department Infrastructure{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Department Assets & Equipment</h5></div>
+        <div class="card-body" id="assetsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/assets", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("assetsBody");
+    if(data.assets.length === 0) { body.innerHTML = '<p class="text-muted text-center">No assets found.</p>'; return; }
+    let html = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Code</th><th>Name</th><th>Condition</th><th>Status</th></tr></thead><tbody>`;
+    data.assets.forEach(a => {
+        let condColor = a.condition_status == 'Good' ? 'success' : (a.condition_status == 'Damaged' ? 'danger' : 'warning');
+        html += `<tr><td><b>${a.asset_code}</b></td><td>${a.name}</td><td><span class="badge bg-${condColor}">${a.condition_status}</span></td><td>${a.lifecycle_status}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

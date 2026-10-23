@@ -1,0 +1,65 @@
+<!-- templates/hod/faculty.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Faculty Management{% endblock %}
+{% block page_title %}Department Faculty{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Faculty Directory</h5>
+            <div class="d-flex gap-2">
+                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search name or designation..." style="width: 250px;">
+                <button class="btn btn-sm btn-primary" onclick="loadFaculty()"><i class="bi bi-search"></i></button>
+            </div>
+        </div>
+        <div class="card-body" id="facultyBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading Faculty...</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadFaculty() {
+    const search = document.getElementById("searchInput").value;
+    const body = document.getElementById("facultyBody");
+    body.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>`;
+
+    try {
+        const res = await fetch(`/hod/api/faculty?search=${encodeURIComponent(search)}`, { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+
+        if(data.faculty.length === 0) {
+            body.innerHTML = '<p class="text-center text-muted py-4">No faculty members found.</p>';
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Name</th><th>Email</th><th>Designation</th><th>Qualification</th><th>Exp (Years)</th><th class="text-end">Action</th></tr></thead>
+            <tbody>`;
+
+        data.faculty.forEach(f => {
+            html += `<tr>
+                <td><b>${f.full_name}</b></td>
+                <td>${f.email}</td>
+                <td>${f.designation || '-'}</td>
+                <td>${f.qualification || '-'}</td>
+                <td>${f.experience || '0'}</td>
+                <td class="text-end"><a href="/hod/faculty/${f.teacher_id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View Profile</a></td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        body.innerHTML = html;
+    } catch(err) {
+        body.innerHTML = '<div class="alert alert-danger">Failed to load faculty data.</div>';
+    }
+}
+loadFaculty();
+</script>
+{% endblock %}

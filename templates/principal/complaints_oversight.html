@@ -1,0 +1,68 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}Complaints Oversight{% endblock %}
+{% block page_title %}Sensitive Grievance Oversight{% endblock %}
+{% block content %}
+<div class="container-fluid" id="complaintsOversight">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/principal/api/complaints", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const s = await res.json();
+    const c = document.getElementById("complaintsOversight");
+    
+    let listHtml = '<tr><td colspan="4" class="text-center text-muted">No active escalated cases.</td></tr>';
+    if(s.escalated_list.length > 0) {
+        listHtml = s.escalated_list.map(c => `
+            <tr>
+                <td><b>${c.category}</b></td>
+                <td>${c.student_name}</td>
+                <td><span class="badge ${c.status == 'Escalated' ? 'bg-danger' : 'bg-warning'}">${c.status}</span></td>
+                <td><a href="/principal/sensitive-complaints" class="btn btn-sm btn-outline-primary">View Details</a></td>
+            </tr>
+        `).join('');
+    }
+
+    c.innerHTML = `
+        <div class="row g-4 mb-4">
+            <div class="col-md-3" data-aos="zoom-in">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white h-100">
+                    <div><p class="mb-1 opacity-75">Pending</p><h2 class="mb-0">${s.status_counts.pending}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                    <div><p class="mb-1 opacity-75">In Progress</p><h2 class="mb-0">${s.status_counts.in_progress}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 shadow-sm rounded-4 p-3 ${s.status_counts.escalated > 0 ? 'bg-danger' : 'bg-success'} text-white h-100">
+                    <div><p class="mb-1 opacity-75">Escalated</p><h2 class="mb-0">${s.status_counts.escalated}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                    <div><p class="mb-1 opacity-75">Resolved</p><h2 class="mb-0">${s.status_counts.resolved}</h2></div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-12" data-aos="fade-up">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0">Active Sensitive Cases (Top 5)</h5></div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead><tr><th>Category</th><th>Student</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+                            <tbody>${listHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    AOS.init();
+}
+loadData();
+</script>
+{% endblock %}

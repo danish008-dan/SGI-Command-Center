@@ -1,0 +1,106 @@
+<!-- templates/teacher/lesson_planner.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Lesson Planner{% endblock %}
+{% block page_title %}Lesson Planner{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Add Lesson Plan</h5></div>
+        <div class="card-body">
+            <form id="createPlanForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small">Subject</label>
+                        <select id="subjectSelect" class="form-select form-select-sm" required></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Section</label>
+                        <input type="text" class="form-control form-control-sm" name="section" placeholder="e.g. A" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Date</label>
+                        <input type="date" class="form-control form-control-sm" name="plan_date" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small">Topic</label>
+                        <input type="text" class="form-control form-control-sm" name="topic" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small">Learning Objective</label>
+                        <textarea class="form-control form-control-sm" name="objective" rows="1"></textarea>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small">Teaching Method</label>
+                        <input type="text" class="form-control form-control-sm" name="method" placeholder="Lecture / PPT / Lab">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Duration (mins)</label>
+                        <input type="number" class="form-control form-control-sm" name="duration" value="50">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm">Add Plan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Recent Plans</h5></div>
+        <div class="card-body" id="plansBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => select.innerHTML += `<option value="${s.subject_id}">${s.subject_name}</option>`);
+}
+
+async function loadPlans() {
+    const res = await fetch("/teacher/api/lesson-plans", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("plansBody");
+
+    if(data.plans.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-4">No lesson plans added.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Date</th><th>Subject</th><th>Section</th><th>Topic</th><th>Status</th></tr></thead>
+        <tbody>`;
+
+    data.plans.forEach(p => {
+        let badge = p.status == 'Completed' ? 'success' : (p.status == 'Postponed' ? 'danger' : 'warning');
+        html += `<tr><td>${new Date(p.plan_date).toLocaleDateString()}</td><td>${p.subject_name}</td><td>${p.section}</td><td><b>${p.topic}</b></td><td><span class="badge bg-${badge}">${p.status}</span></td></tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+document.getElementById("createPlanForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/teacher/api/lesson-plans/create", { method: "POST", headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }, body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) { e.target.reset(); loadPlans(); }
+});
+
+loadSubjects();
+loadPlans();
+</script>
+{% endblock %}

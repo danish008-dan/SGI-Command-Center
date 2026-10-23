@@ -1,0 +1,121 @@
+<!-- templates/student/result.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Semester Result{% endblock %}
+{% block page_title %}Published Results{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid" id="resultContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Results...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+let historicalResults = [];
+
+async function loadResults() {
+    try {
+        const res = await fetch("/student/api/result", { headers: { "Authorization": "Bearer " + getToken() } });
+        if (!res.ok) throw new Error("Failed to fetch results");
+        const data = await res.json();
+
+        historicalResults = data.results || [];
+        const container = document.getElementById("resultContent");
+
+        if (historicalResults.length === 0) {
+            container.innerHTML = '<div class="alert alert-info text-center">No published results available yet.</div>';
+            return;
+        }
+
+        let dropdownOptions = historicalResults.map((r, i) =>
+            `<option value="${i}">Semester ${r.semester}</option>`
+        ).join('');
+
+        container.innerHTML = `
+            <div class="card shadow-sm mb-4" data-aos="fade-up">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Academic History</h5>
+                    <select id="semesterSelect" class="form-select form-select-sm" style="width: auto;" onchange="changeSemester()">
+                        ${dropdownOptions}
+                    </select>
+                </div>
+                <div class="card-body" id="resultDetails">
+                    <!-- Details will be injected here -->
+                </div>
+            </div>
+        `;
+        AOS.init();
+        changeSemester(); // Load the latest (first in array) by default
+    } catch (error) {
+        document.getElementById("resultContent").innerHTML = '<div class="alert alert-danger">Error loading results.</div>';
+    }
+}
+
+async function changeSemester() {
+    const select = document.getElementById("semesterSelect");
+    const selectedIndex = parseInt(select.value);
+    const selectedResult = historicalResults[selectedIndex];
+    const detailsContainer = document.getElementById("resultDetails");
+
+    // Render Summary
+    let html = `
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="border rounded p-3 text-center bg-light"><small class="text-muted d-block">SGPA</small><h4 class="mb-0 text-primary">${selectedResult.sgpa || '-'}</h4></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 text-center bg-light"><small class="text-muted d-block">CGPA</small><h4 class="mb-0 text-success">${selectedResult.cgpa || '-'}</h4></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 text-center bg-light"><small class="text-muted d-block">Percentage</small><h4 class="mb-0 text-info">${selectedResult.percentage || 0}%</h4></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 text-center bg-light"><small class="text-muted d-block">Grade</small><h4 class="mb-0 text-warning">${selectedResult.grade || '-'}</h4></div></div>
+        </div>
+        <h6>Subject-wise Marks (Verified)</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr><th>Subject</th><th>Code</th><th class="text-center">Credits</th><th class="text-center">Max</th><th class="text-center">Obtained</th><th class="text-center">%</th><th class="text-center">Grade</th></tr>
+                </thead>
+                <tbody id="subjectsBody">
+                    <tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    detailsContainer.innerHTML = html;
+
+    // Fetch Subject Marks for this semester
+    try {
+        const subRes = await fetch(`/student/api/result/${selectedResult.semester}/subjects`, { headers: { "Authorization": "Bearer " + getToken() } });
+        const subData = await subRes.json();
+        const subBody = document.getElementById("subjectsBody");
+
+        if (!subData.subjects || subData.subjects.length === 0) {
+            subBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No verified subject marks found for this semester.</td></tr>';
+        } else {
+            subBody.innerHTML = subData.subjects.map(s => `
+                <tr>
+                    <td>${s.subject_name}</td>
+                    <td>${s.subject_code || '-'}</td>
+                    <td class="text-center">${s.credits || '-'}</td>
+                    <td class="text-center">${s.maximum_marks}</td>
+                    <td class="text-center fw-bold">${s.obtained_marks}</td>
+                    <td class="text-center">${s.percentage}%</td>
+                    <td class="text-center"><span class="badge bg-info">${s.grade}</span></td>
+                </tr>
+            `).join('');
+        }
+    } catch (err) {
+        document.getElementById("subjectsBody").innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load subjects.</td></tr>';
+    }
+}
+
+loadResults();
+</script>
+{% endblock %}

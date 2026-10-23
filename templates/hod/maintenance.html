@@ -1,0 +1,74 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Maintenance Requests{% endblock %}
+{% block page_title %}Infrastructure Support{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Submit Maintenance Request</h5></div>
+        <div class="card-body">
+            <form id="createMaintForm">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <select class="form-select" name="asset_id" id="assetSelect" required>
+                            <option value="">Select Asset...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="priority" required>
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><textarea class="form-control" name="issue_description" rows="2" placeholder="Describe the issue..." required></textarea></div>
+                    <div class="col-12"><button type="submit" class="btn btn-primary">Submit Request</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Request Status</h5></div>
+        <div class="card-body" id="maintBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadAssets() {
+    const res = await fetch("/hod/api/assets", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const select = document.getElementById("assetSelect");
+    data.assets.forEach(a => {
+        select.innerHTML += `<option value="${a.asset_id}">${a.name} (${a.asset_code})</option>`;
+    });
+}
+
+async function loadRequests() {
+    const res = await fetch("/hod/api/maintenance", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("maintBody");
+    if(data.requests.length === 0) { body.innerHTML = '<p class="text-muted text-center">No maintenance requests.</p>'; return; }
+    let html = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Asset</th><th>Issue</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>`;
+    data.requests.forEach(r => {
+        let prioColor = r.priority == 'High' ? 'danger' : (r.priority == 'Medium' ? 'warning' : 'info');
+        html += `<tr><td><b>${r.asset_name}</b></td><td>${r.issue_description}</td><td><span class="badge bg-${prioColor}">${r.priority}</span></td><td>${r.status}</td><td>${new Date(r.created_at).toLocaleDateString()}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+document.getElementById("createMaintForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/hod/api/maintenance/create", { method: "POST", headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }, body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) { e.target.reset(); loadRequests(); }
+});
+
+loadAssets();
+loadRequests();
+</script>
+{% endblock %}

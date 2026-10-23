@@ -1,0 +1,72 @@
+<!-- templates/hod/leaves.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Leave Approvals{% endblock %}
+{% block page_title %}Faculty Leave Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Pending & Processed Leave Requests</h5>
+        </div>
+        <div class="card-body" id="leavesBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading Requests...</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadLeaves() {
+    const res = await fetch("/hod/api/leaves", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("leavesBody");
+
+    if(data.length === 0) {
+        body.innerHTML = '<p class="text-center text-muted py-4">No leave requests from faculty.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Faculty</th><th>Type</th><th>Dates</th><th>Reason</th><th class="text-center">Action</th></tr></thead><tbody>';
+    data.forEach(l => {
+        let actionHtml = `<span class="badge bg-${l.status === 'Approved' ? 'success' : 'danger'}">${l.status}</span>`;
+        if(l.status === 'Pending') {
+            actionHtml = `
+                <button class="btn btn-sm btn-success me-1" onclick="updateStatus(${l.leave_id}, 'Approved')"><i class="bi bi-check-lg"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="updateStatus(${l.leave_id}, 'Rejected')"><i class="bi bi-x-lg"></i></button>
+            `;
+        }
+        html += `<tr><td>${l.teacher_name}</td><td>${l.leave_type}</td><td>${l.from_date} to ${l.to_date}</td><td>${l.reason}</td><td class="text-center">${actionHtml}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+async function updateStatus(id, status) {
+    if(!confirm(`Are you sure you want to ${status} this leave request?`)) return;
+
+    const formData = new URLSearchParams();
+    formData.append("leave_id", id);
+    formData.append("status", status);
+
+    const res = await fetch("/hod/api/leaves/update", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken(), "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData
+    });
+    const data = await res.json();
+    if(data.success) {
+        alert("Leave " + status);
+        loadLeaves(); // Reload table
+    } else {
+        alert("Failed to update status.");
+    }
+}
+
+loadLeaves();
+</script>
+{% endblock %}

@@ -1,0 +1,111 @@
+<!-- templates/teacher/leaves.html -->
+{% extends "teacher/teacher_layout.html" %}
+
+{% block title %}Leave Application{% endblock %}
+{% block page_title %}Apply for Leave{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row g-4">
+        <!-- Apply Form -->
+        <div class="col-md-5" data-aos="fade-up">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3"><h6 class="mb-0">New Leave Application</h6></div>
+                <div class="card-body">
+                    <form id="leaveForm">
+                        <div class="mb-3">
+                            <label class="form-label">Leave Type</label>
+                            <select class="form-select" name="leave_type" required>
+                                <option value="Casual Leave">Casual Leave</option>
+                                <option value="Sick Leave">Sick Leave</option>
+                                <option value="Earned Leave">Earned Leave</option>
+                                <option value="Maternity/Paternity Leave">Maternity/Paternity Leave</option>
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">From Date</label>
+                                <input type="date" class="form-control" name="from_date" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">To Date</label>
+                                <input type="date" class="form-control" name="to_date" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason</label>
+                            <textarea class="form-control" name="reason" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="col-md-7" data-aos="fade-up" data-aos-delay="100">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3"><h6 class="mb-0">Leave History</h6></div>
+                <div class="card-body" id="historyBody">
+                    <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading...</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+// Load History
+async function loadHistory() {
+    const res = await fetch("/teacher/api/leaves", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("historyBody");
+
+    if(data.length === 0) {
+        body.innerHTML = '<p class="text-center text-muted py-4">No leave applications submitted yet.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th></tr></thead><tbody>';
+    data.forEach(l => {
+        let badge = 'bg-warning';
+        if(l.status === 'Approved') badge = 'bg-success';
+        if(l.status === 'Rejected') badge = 'bg-danger';
+        html += `<tr><td>${l.leave_type}</td><td>${l.from_date} to ${l.to_date}</td><td>${l.reason}</td><td><span class="badge ${badge}">${l.status}</span></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+// Submit Form
+document.getElementById("leaveForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Submitting...';
+    btn.disabled = true;
+
+    const formData = new FormData(this);
+    const res = await fetch("/teacher/api/leaves/add", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken() },
+        body: formData
+    });
+    const data = await res.json();
+    if(data.success) {
+        alert(data.message);
+        this.reset();
+        loadHistory();
+    } else {
+        alert("Error: " + data.message);
+    }
+    btn.innerHTML = 'Submit Application';
+    btn.disabled = false;
+});
+
+loadHistory();
+</script>
+{% endblock %}

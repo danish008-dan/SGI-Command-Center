@@ -1,0 +1,63 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Salary Structures{% endblock %}
+{% block page_title %}Salary Components & Structures{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Configurable Salary Components</h5>
+            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#infoModal">
+                <i class="bi bi-info-circle"></i> What do these mean?
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Component Name</th><th>Type</th><th>Calculation Type</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in components %}
+                        <tr>
+                            <td class="fw-bold">{{ c.component_name }}</td>
+                            <td><span class="badge bg-{% if c.component_type == 'Earning' %}success{% elif c.component_type == 'Deduction' %}danger{% else %}warning{% endif %}">{{ c.component_type }}</span></td>
+                            <td>{{ c.calculation_type }}</td>
+                            <td><span class="badge bg-{% if c.status == 'Active' %}primary{% else %}secondary{% endif %}">{{ c.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No components found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Modal -->
+<div class="modal fade" id="infoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Understanding Salary Components</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Here is a simple explanation of the standard salary components used in Indian payroll:</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Basic Salary:</strong> The core fixed part of your salary. It is usually 40-50% of the total salary. All other components are often calculated based on this.</li>
+                    <li class="list-group-item"><strong>House Rent Allowance (HRA):</strong> An allowance given to employees to meet the cost of renting a home. It is partially or fully tax-exempt.</li>
+                    <li class="list-group-item"><strong>Special Allowance:</strong> A flexible amount given to employees to meet specific needs or to balance the salary structure. It is fully taxable.</li>
+                    <li class="list-group-item"><strong>Provident Fund (PF):</strong> A retirement benefit where both employee and employer contribute a percentage of the basic salary (usually 12%). <span class="badge bg-warning text-dark">Pending Configuration</span></li>
+                    <li class="list-group-item"><strong>Professional Tax (PT):</strong> A tax levied by state governments in India. It is a small fixed amount deducted monthly. <span class="badge bg-warning text-dark">Pending Configuration</span></li>
+                    <li class="list-group-item"><strong>Tax Deducted at Source (TDS):</strong> Income tax deducted from the salary based on the employee's tax slab. <span class="badge bg-warning text-dark">Pending Configuration</span></li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

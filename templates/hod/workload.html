@@ -1,0 +1,58 @@
+<!-- templates/hod/workload.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Faculty Workload{% endblock %}
+{% block page_title %}Faculty Workload Engine{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Faculty Teaching Load (Hours/Week)</h5>
+        </div>
+        <div class="card-body" id="workloadBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadWorkload() {
+    const body = document.getElementById("workloadBody");
+    try {
+        const res = await fetch("/hod/api/workload", { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+
+        if(data.workload.length === 0) {
+            body.innerHTML = '<p class="text-center text-muted py-4">No faculty workload data available.</p>';
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Faculty Name</th><th>Designation</th><th class="text-center">Theory Hrs</th><th class="text-center">Practical Hrs</th><th class="text-center">Lab Hrs</th><th class="text-center fw-bold">Total Hrs</th></tr></thead>
+            <tbody>`;
+
+        data.workload.forEach(w => {
+            html += `<tr>
+                <td><b>${w.full_name}</b></td>
+                <td>${w.designation || '-'}</td>
+                <td class="text-center">${w.theory_hours}</td>
+                <td class="text-center">${w.practical_hours}</td>
+                <td class="text-center">${w.lab_hours}</td>
+                <td class="text-center fw-bold text-primary fs-5">${w.total_hours}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        body.innerHTML = html;
+    } catch(err) {
+        body.innerHTML = '<div class="alert alert-danger">Failed to load workload data.</div>';
+    }
+}
+loadWorkload();
+</script>
+{% endblock %}

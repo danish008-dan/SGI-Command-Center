@@ -1,0 +1,77 @@
+<!-- templates/principal/results_approval.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}Result Approval{% endblock %}
+{% block page_title %}Result Approval Workflow{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% for sem, students in semesters.items() %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Semester {{ sem }} - Pending Approval ({{ students|length }} Students)</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-success approve-btn" data-sem="{{ sem }}">Approve All</button>
+                <button class="btn btn-sm btn-danger reject-btn" data-sem="{{ sem }}">Reject All</button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr><th>Student Name</th><th>Percentage</th><th>SGPA</th><th>Grade</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td>{{ s.full_name }}</td>
+                        <td>{{ s.percentage }}%</td>
+                        <td>{{ s.sgpa }}</td>
+                        <td>{{ s.grade }}</td>
+                        <td><span class="badge bg-warning">Pending</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No results pending for approval.</div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function handleAction(btn, action) {
+    const sem = btn.dataset.sem;
+    let reason = "";
+    if (action === "Rejected") {
+        reason = prompt("Please enter reason for rejection:");
+        if(!reason) return;
+    }
+
+    if(!confirm(`Are you sure you want to ${action} Semester ${sem} results?`)) return;
+
+    const formData = new URLSearchParams();
+    formData.append("semester", sem);
+    if(reason) formData.append("reason", reason);
+
+    const url = action === "Approved" ? "/principal/api/results/approve" : "/principal/api/results/reject";
+
+    try {
+        const res = await fetch(url, { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+}
+
+document.querySelectorAll(".approve-btn").forEach(btn => {
+    btn.addEventListener("click", function() { handleAction(this, "Approved"); });
+});
+
+document.querySelectorAll(".reject-btn").forEach(btn => {
+    btn.addEventListener("click", function() { handleAction(this, "Rejected"); });
+});
+</script>
+{% endblock %}

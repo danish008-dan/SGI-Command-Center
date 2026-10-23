@@ -1,0 +1,165 @@
+<!-- templates/admin/assets.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Asset & Inventory{% endblock %}
+{% block page_title %}Asset & Inventory Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Assets</p>
+                <h3 class="cmd-stat-value">{{ total_assets }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Active Assets</p>
+                <h3 class="cmd-stat-value text-success">{{ active_assets }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Categories</p>
+                <h3 class="cmd-stat-value text-primary">{{ categories|length }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Under Maintenance</p>
+                <h3 class="cmd-stat-value text-danger">0</h3> <!-- Will be dynamic later -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Register Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Asset Register</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+                <i class="bi bi-plus-circle me-1"></i> Register New Asset
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Asset Code</th><th>Name</th><th>Category</th>
+                            <th>Custodian</th><th>Location</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in assets %}
+                        <tr>
+                            <td class="fw-bold">{{ a.asset_code }}</td>
+                            <td>{{ a.name }} <small class="text-muted">({{ a.serial_number or '-' }})</small></td>
+                            <td><span class="badge bg-info">{{ a.category_name }}</span></td>
+                            <td>{{ a.custodian_name or '-' }}</td>
+                            <td>{{ a.room_number or a.department_name or '-' }}</td>
+                            <td><span class="badge bg-{% if a.lifecycle_status == 'Active' %}success{% else %}danger{% endif %}">{{ a.lifecycle_status }}</span></td>
+                            <td>
+                                <a href="/admin/assets/{{ a.asset_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No assets registered yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Asset Modal -->
+<div class="modal fade" id="addAssetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Register New Asset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assetForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Asset Name *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" name="category_id" required>
+                                <option value="">Select Category</option>
+                                {% for c in categories %}
+                                <option value="{{ c.category_id }}">{{ c.category_name }} ({{ c.prefix }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Serial Number</label>
+                            <input type="text" class="form-control" name="serial_number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Condition</label>
+                            <select class="form-select" name="condition_status">
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Damaged">Damaged</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <select class="form-select" name="department_id">
+                                <option value="">None</option>
+                                {% for d in departments %}
+                                <option value="{{ d.department_id }}">{{ d.department_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier / Vendor</label>
+                            <input type="text" class="form-control" name="supplier">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Date</label>
+                            <input type="date" class="form-control" name="acquisition_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Cost (₹)</label>
+                            <input type="number" step="0.01" class="form-control" name="acquisition_cost">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Register Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("assetForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/assets/add", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

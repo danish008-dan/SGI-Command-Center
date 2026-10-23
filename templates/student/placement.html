@@ -1,0 +1,280 @@
+<!-- templates/student/placement.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Placement Cell{% endblock %}
+{% block page_title %}Career & Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+    <a href="/student/resume-builder" class="btn btn-success btn-sm shadow-sm float-end">
+        <i class="bi bi-file-earmark-plus"></i> Resume Builder
+    </a>
+</div>
+
+<div class="container-fluid">
+    <!-- Resume Analyzer Section -->
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">AI Resume Analyzer</h5></div>
+        <div class="card-body">
+            <form id="resumeForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small">Upload Resume (PDF only)</label>
+                        <input type="file" class="form-control form-control-sm" name="file" accept="application/pdf" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Job Description (Optional - for JD matching)</label>
+                        <textarea class="form-control form-control-sm" name="jd_text" rows="3" placeholder="Paste JD here to get a match score..."></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm" id="analyzeBtn">
+                            <i class="bi bi-stars"></i> Analyze Resume
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div id="analysisResult" class="mt-4"></div>
+        </div>
+    </div>
+
+    <!-- Placement Drives Section -->
+    <div class="card shadow-sm mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Active Placement Drives</h5></div>
+        <div class="card-body" id="drivesBody">
+            <div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>
+        </div>
+    </div>
+
+    <!-- My Applications Section -->
+    <div class="card shadow-sm mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">My Applications</h5></div>
+        <div class="card-body" id="appsBody">
+            <div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>
+        </div>
+    </div>
+
+    <!-- Analysis History Section -->
+    <div class="card shadow-sm" data-aos="fade-up" data-aos-delay="300">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Analysis History</h5></div>
+        <div class="card-body" id="historyBody">
+            <div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+// 1. Load Latest Analysis
+async function loadSavedReport() {
+    const res = await fetch("/student/api/placement/saved", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    if(data.saved_report) {
+        renderAnalysis(data.saved_report.analysis_json, data.saved_report.jd_used);
+    }
+}
+
+function renderAnalysis(report, jd_used) {
+    const container = document.getElementById("analysisResult");
+    if(!report) {
+        container.innerHTML = '<p class="text-muted text-center">No analysis available. Upload a resume to begin.</p>';
+        return;
+    }
+
+    let modeBadge = jd_used ? '<span class="badge bg-info">JD Match Mode</span>' : '<span class="badge bg-secondary">General Mode</span>';
+    let scoreColor = report.ats_score >= 75 ? 'success' : (report.ats_score >= 50 ? 'warning' : 'danger');
+
+    let html = `
+        <h5 class="mb-3">Analysis Result ${modeBadge}</h5>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4 text-center">
+                <div class="border rounded p-3 bg-light">
+                    <small class="text-muted d-block">ATS Score</small>
+                    <h3 class="mb-0 text-${scoreColor}">${report.ats_score || 'N/A'}/100</h3>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-6">
+                        <h6 class="text-success">Matched Skills</h6>
+                        <ul class="small">${(report.matched_skills || []).map(s => `<li>${s}</li>`).join('') || '<li class="text-muted">None</li>'}</ul>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-danger">Missing Skills</h6>
+                        <ul class="small">${(report.missing_skills || []).map(s => `<li>${s}</li>`).join('') || '<li class="text-muted">None</li>'}</ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <h6>Improvements</h6>
+                <ul class="small">${(report.improvements || []).map(i => `<li>${i}</li>`).join('') || '<li class="text-muted">N/A</li>'}</ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Interview Prep</h6>
+                <ul class="small">
+                    <li><b>HR:</b> ${(report.interview_prep?.hr_questions || []).join(', ') || 'N/A'}</li>
+                    <li><b>Tech:</b> ${(report.interview_prep?.tech_questions || []).join(', ') || 'N/A'}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    container.innerHTML = html;
+}
+
+document.getElementById("resumeForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("analyzeBtn");
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+    const res = await fetch("/student/api/placement/upload", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken() },
+        body: formData
+    });
+
+    const data = await res.json();
+    btn.innerHTML = '<i class="bi bi-stars"></i> Analyze Resume';
+    btn.disabled = false;
+
+    if(data.success) {
+        renderAnalysis(data.report, data.jd_used);
+        loadHistory(); // Refresh history
+    } else {
+        alert(data.message || "Failed to analyze.");
+    }
+});
+
+// 2. Load Placement Drives
+async function loadDrives() {
+    const res = await fetch("/student/api/companies", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("drivesBody");
+
+    if(data.drives.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-3">No active placement drives available.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Company</th><th>Package</th><th>Req. CGPA</th><th class="text-center">Eligibility</th><th class="text-end">Action</th></tr></thead>
+        <tbody>`;
+
+    data.drives.forEach(d => {
+        let badge = d.is_eligible ? 'success' : 'danger';
+        html += `<tr>
+            <td><b>${d.company_name}</b><br><small class="text-muted">${d.location || ''}</small></td>
+            <td>₹${d.package || 'N/A'} LPA</td>
+            <td>${d.eligibility_cgpa || 'N/A'}</td>
+            <td class="text-center"><span class="badge bg-${badge}">${d.is_eligible ? 'Eligible' : 'Ineligible'}</span></td>
+            <td class="text-end">
+                ${d.is_eligible ? `<button class="btn btn-sm btn-primary" onclick="applyToDrive(${d.company_id})">Apply</button>` : '<button class="btn btn-sm btn-secondary" disabled>Apply</button>'}
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+async function applyToDrive(companyId) {
+    const formData = new URLSearchParams();
+    formData.append("company_id", companyId);
+
+    const res = await fetch("/student/api/applications/apply", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken(), "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData
+    });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) {
+        loadApplications();
+    }
+}
+
+// 3. Load Applications
+async function loadApplications() {
+    const res = await fetch("/student/api/applications", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("appsBody");
+
+    if(data.applications.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-3">You have not applied to any drives yet.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Company</th><th>Package</th><th>Applied On</th><th class="text-center">Status</th></tr></thead>
+        <tbody>`;
+
+    data.applications.forEach(a => {
+        let badge = a.status === 'Selected' ? 'success' : (a.status === 'Rejected' ? 'danger' : 'info');
+        html += `<tr>
+            <td><b>${a.company_name}</b></td>
+            <td>₹${a.package || 'N/A'} LPA</td>
+            <td>${a.applied_on}</td>
+            <td class="text-center"><span class="badge bg-${badge}">${a.status}</span></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+// 4. Load History
+async function loadHistory() {
+    const res = await fetch("/student/api/resume/history", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("historyBody");
+
+    if(data.history.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-3">No analysis history found.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Date</th><th>Mode</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>`;
+
+    data.history.forEach(h => {
+        let modeBadge = h.jd_used ? '<span class="badge bg-info">JD Match</span>' : '<span class="badge bg-secondary">General</span>';
+        html += `<tr>
+            <td>${h.created_at}</td>
+            <td>${modeBadge}</td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewHistory(${h.history_id})">View Result</button>
+                <a href="/student/api/resume/download/${h.history_id}" class="btn btn-sm btn-outline-secondary" target="_blank">Download PDF</a>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+async function viewHistory(historyId) {
+    const res = await fetch(`/student/api/resume/history/${historyId}`, { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    if(data.analysis) {
+        renderAnalysis(data.analysis, true); // Assume JD used if viewing from history detail (simplified for UI)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        alert("Failed to load history.");
+    }
+}
+
+// Initialize all
+loadSavedReport();
+loadDrives();
+loadApplications();
+loadHistory();
+</script>
+{% endblock %}

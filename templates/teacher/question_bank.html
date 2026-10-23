@@ -1,0 +1,106 @@
+<!-- templates/teacher/question_bank.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Question Bank{% endblock %}
+{% block page_title %}Question Bank{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Add Question</h5></div>
+        <div class="card-body">
+            <form id="createQuestionForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small">Subject</label>
+                        <select id="subjectSelect" class="form-select form-select-sm" required></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Topic</label>
+                        <input type="text" class="form-control form-control-sm" name="topic" placeholder="e.g. SQL Joins">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Question Text</label>
+                        <input type="text" class="form-control form-control-sm" name="question_text" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Type</label>
+                        <select class="form-select form-select-sm" name="question_type">
+                            <option value="Short Answer">Short Answer</option>
+                            <option value="MCQ">MCQ</option>
+                            <option value="Long Answer">Long Answer</option>
+                            <option value="Practical">Practical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Difficulty</label>
+                        <select class="form-select form-select-sm" name="difficulty">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Marks</label>
+                        <input type="number" class="form-control form-control-sm" name="marks" value="5">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm">Add Question</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Question Repository</h5></div>
+        <div class="card-body" id="questionsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => select.innerHTML += `<option value="${s.subject_id}">${s.subject_name}</option>`);
+}
+
+async function loadQuestions() {
+    const res = await fetch("/teacher/api/questions", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("questionsBody");
+
+    if(data.questions.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-4">No questions added yet.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Question</th><th>Subject</th><th>Topic</th><th>Type</th><th>Difficulty</th><th class="text-center">Marks</th></tr></thead>
+        <tbody>`;
+
+    data.questions.forEach(q => {
+        let diffColor = q.difficulty == 'Hard' ? 'danger' : (q.difficulty == 'Medium' ? 'warning' : 'success');
+        html += `<tr><td>${q.question_text}</td><td>${q.subject_name}</td><td>${q.topic || '-'}</td><td><span class="badge bg-info">${q.question_type}</span></td><td><span class="badge bg-${diffColor}">${q.difficulty}</span></td><td class="text-center fw-bold">${q.marks}</td></tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+document.getElementById("createQuestionForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/teacher/api/questions/create", { method: "POST", headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }, body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) { e.target.reset(); loadQuestions(); }
+});
+
+loadSubjects();
+loadQuestions();
+</script>
+{% endblock %}

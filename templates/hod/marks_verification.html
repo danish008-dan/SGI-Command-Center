@@ -1,0 +1,65 @@
+<!-- templates/hod/marks_verification.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Marks Verification{% endblock %}
+{% block page_title %}Marks Verification{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Marks for Verification</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Subject</th><th>Exam Type</th><th>Teacher</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for m in submitted_marks %}
+                        <tr>
+                            <td>{{ m.subject_name }}</td>
+                            <td>{{ m.exam_type }}</td>
+                            <td>{{ m.teacher_name }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success verify-btn" data-subject="{{ m.subject_id }}" data-exam="{{ m.exam_type }}" data-action="Verified">Verify</button>
+                                <button class="btn btn-sm btn-danger return-btn" data-subject="{{ m.subject_id }}" data-exam="{{ m.exam_type }}" data-action="Returned">Return</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No marks pending verification.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function changeStatus(btn) {
+    const subjectId = btn.dataset.subject;
+    const examType = btn.dataset.exam;
+    const action = btn.dataset.action;
+
+    if(!confirm(`Are you sure you want to mark these marks as ${action}?`)) return;
+
+    const formData = new URLSearchParams();
+    formData.append("subject_id", subjectId);
+    formData.append("exam_type", examType);
+    formData.append("action", action);
+
+    try {
+        const res = await fetch("/hod/api/marks/verify", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+}
+
+document.querySelectorAll(".verify-btn, .return-btn").forEach(btn => {
+    btn.addEventListener("click", function() { changeStatus(this); });
+});
+</script>
+{% endblock %}

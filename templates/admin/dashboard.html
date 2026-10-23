@@ -1,0 +1,791 @@
+<!-- templates/admin/dashboard.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Admin Command Center{% endblock %}
+{% block page_title %}Sobhasaria Group of Institution Admin Command Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- === ZONE 1: HEADER & GLOBAL FILTERS === -->
+    <div class="card shadow-sm mb-4 border-0 rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h5 class="mb-0">Session: {% if filters.academic_year %}{{ filters.academic_year }}{% else %}All Time{% endif %}</h5>
+                <p class="text-muted small mb-0">Welcome back. Here's the operational health of SGI.</p>
+            </div>
+            <form method="get" action="/admin/dashboard" class="d-flex gap-2 align-items-center flex-wrap">
+                <select name="academic_year" class="form-select form-select-sm" style="width: 120px;">
+                    <option value="">All Years</option>
+                    <option value="2024-25" {% if filters.academic_year == '2024-25' %}selected{% endif %}>2024-25</option>
+                    <option value="2025-26" {% if filters.academic_year == '2025-26' %}selected{% endif %}>2025-26</option>
+                </select>
+                <select name="semester" class="form-select form-select-sm" style="width: 100px;">
+                    <option value="">All Sem</option>
+                    {% for i in range(1, 9) %}
+                    <option value="{{ i }}" {% if filters.semester == i %}selected{% endif %}>Sem {{ i }}</option>
+                    {% endfor %}
+                </select>
+                <select name="department_id" class="form-select form-select-sm" style="width: 150px;">
+                    <option value="">All Depts</option>
+                    {% for d in departments %}
+                    <option value="{{ d.department_id }}" {% if filters.department_id == d.department_id %}selected{% endif %}>{{ d.department_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Apply</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- === ZONE 2: INSTITUTIONAL KPIs === -->
+    <div class="zone-header">Institutional Overview</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6" data-aos="zoom-in">
+            <a href="/admin/students" class="text-decoration-none text-dark">
+                <div class="card cmd-center-card p-3">
+                    <i class="bi bi-mortarboard-fill card-icon text-primary"></i>
+                    <p class="cmd-stat-label">Total Students</p>
+                    <h3 class="cmd-stat-value"><span class="counter" data-target="{{ stats.total_students|default(0) }}">0</span></h3>
+                    <span class="cmd-trend-up">Active Master Count</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6" data-aos="zoom-in" data-aos-delay="100">
+            <a href="/admin/teachers" class="text-decoration-none text-dark">
+                <div class="card cmd-center-card p-3">
+                    <i class="bi bi-person-badge-fill card-icon text-success"></i>
+                    <p class="cmd-stat-label">Total Faculty</p>
+                    <h3 class="cmd-stat-value"><span class="counter" data-target="{{ stats.total_teachers|default(0) }}">0</span></h3>
+                    <span class="cmd-trend-up">Active Master Count</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6" data-aos="zoom-in" data-aos-delay="200">
+            <a href="/admin/departments" class="text-decoration-none text-dark">
+                <div class="card cmd-center-card p-3">
+                    <i class="bi bi-building-fill card-icon text-warning"></i>
+                    <p class="cmd-stat-label">Departments</p>
+                    <h3 class="cmd-stat-value"><span class="counter" data-target="{{ stats.total_departments|default(0) }}">0</span></h3>
+                    <span class="text-muted small">Institution wide</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6" data-aos="zoom-in" data-aos-delay="300">
+            <a href="/admin/users" class="text-decoration-none text-dark">
+                <div class="card cmd-center-card p-3">
+                    <i class="bi bi-people-fill card-icon text-info"></i>
+                    <p class="cmd-stat-label">Active Users</p>
+                    <h3 class="cmd-stat-value"><span class="counter" data-target="{{ stats.active_users|default(0) }}">0</span></h3>
+                    <span class="text-muted small">System logins</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- === ZONE 3: FINANCE & ADMIN === -->
+    <div class="zone-header">Finance & Administration</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6" data-aos="fade-up">
+            <div class="card cmd-center-card p-3 bg-light" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('feeCollection')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label">Fee Collection</p>
+                <h3 class="cmd-stat-value text-primary">₹<span class="counter" data-target="{{ stats.total_collected|default(0) }}" data-format="currency">0</span></h3>
+                <span class="text-muted small">of ₹{{ "{:,.0f}".format(stats.total_demand) }} Demand</span>
+                <div class="progress mt-2" style="height: 5px;">
+                    <div class="progress-bar bg-primary" style="width: {{ stats.collection_percentage }}%"></div>
+                </div>
+                <small class="mt-1"><span class="counter" data-target="{{ stats.collection_percentage|default(0) }}">0</span>% Collected</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="card cmd-center-card p-3 border-danger" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('outstandingFees')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label text-danger">Outstanding Fees</p>
+                <h3 class="cmd-stat-value text-danger">₹<span class="counter" data-target="{{ stats.outstanding|default(0) }}" data-format="currency">0</span></h3>
+                <a href="/admin/fees" class="btn btn-sm btn-outline-danger mt-2">View Pending</a>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6" data-aos="fade-up" data-aos-delay="200">
+            <a href="/admin/complaints" class="text-decoration-none text-dark">
+                <div class="card cmd-center-card p-3" style="position: relative;">
+                    <button class="chart-info-btn" onclick="showCardInfo('complaints')" title="Details"><i class="bi bi-info-circle"></i></button>
+                    <p class="cmd-stat-label">Open Complaints</p>
+                    <h3 class="cmd-stat-value text-warning"><span class="counter" data-target="{{ stats.open_complaints|default(0) }}">0</span></h3>
+                    <span class="text-danger small"><i class="bi bi-exclamation-circle"></i> <span class="counter" data-target="{{ stats.sla_breached|default(0) }}">0</span> SLA Breached</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="card cmd-center-card p-3" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('pendingApprovals')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label">Pending Approvals</p>
+                <h3 class="cmd-stat-value text-info"><span class="counter" data-target="{{ stats.pending_leaves|default(0) }}">0</span></h3>
+                <span class="text-muted small">Leave Requests</span>
+                <div class="mt-2 pt-2 border-top">
+                    <small class="text-muted">Timetable Drafts: </small>
+                    <small class="fw-bold text-dark"><span class="counter" data-target="{{ stats.pending_timetable|default(0) }}">0</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === ZONE 4: ACADEMIC HEALTH === -->
+    <div class="zone-header">Academic Operations</div>
+
+    <!-- Top: 4 KPI Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('avgAttendance')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label">Avg Attendance</p>
+                <h3 class="cmd-stat-value {% if stats.avg_attendance|default(0) < 75 %}text-danger{% else %}text-success{% endif %}"><span class="counter" data-target="{{ stats.avg_attendance|default(0)|round(0)|int }}" data-suffix="%">0</span></h3>
+                <small class="text-muted">Lowest: <span class="counter" data-target="{{ low_attendance_count|default(0) }}">0</span> students</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('resultStatus')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label">Result Status</p>
+                <h3 class="cmd-stat-value text-primary">
+                    <span class="counter" data-target="{{ stats.published_results|default(0) }}">0</span> / {{ (stats.published_results|default(0) + stats.draft_results|default(0)) }}
+                </h3>
+                <small class="text-success"><span class="counter" data-target="{{ stats.published_results|default(0) }}">0</span> Published</small> |
+                <small class="text-warning"><span class="counter" data-target="{{ stats.draft_results|default(0) }}">0</span> Draft</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('ttConflicts')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label">Timetable Conflicts</p>
+                <h3 class="cmd-stat-value {% if stats.tt_conflicts|default(0) > 0 %}text-danger{% else %}text-success{% endif %}"><span class="counter" data-target="{{ stats.tt_conflicts|default(0) }}">0</span></h3>
+                <small class="text-muted">Detected Overlaps</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card cmd-center-card p-3 text-center" style="position: relative;">
+                <button class="chart-info-btn" onclick="showCardInfo('lowAttendance')" title="Details"><i class="bi bi-info-circle"></i></button>
+                <p class="cmd-stat-label">Low Attendance</p>
+                <h3 class="cmd-stat-value text-danger"><span class="counter" data-target="{{ low_attendance_count|default(0) }}">0</span></h3>
+                <small class="text-muted">Students &lt; 75%</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom: 3 Academic Charts Side-by-Side -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Attendance Brackets</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <button class="chart-info-btn" onclick="showChartInfo('attBracketChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="attBracketChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Grade Distribution</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <button class="chart-info-btn" onclick="showChartInfo('gradeDistChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="gradeDistChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Result Status</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <button class="chart-info-btn" onclick="showChartInfo('resultDistChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="resultDistChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === ZONE 5: ANALYTICS === -->
+    <div class="zone-header">Analytics & Financial Health</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Department Strength Analytics</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <button class="chart-info-btn" style="left: 2px; right: auto;" onclick="showDeptLegend()" title="Department Legend"><i class="bi bi-card-text"></i></button>
+                        <button class="chart-info-btn" onclick="showChartInfo('deptStrengthChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="deptStrengthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Fee Collection Ratio</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <button class="chart-info-btn" onclick="showChartInfo('feeRatioChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="feeRatioChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Fee Collection Trend (Last 6 Months)</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <button class="chart-info-btn" onclick="showChartInfo('feeTrendChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="feeTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Department-wise Fee Collection %</h6></div>
+                <div class="card-body">
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <button class="chart-info-btn" style="left: 2px; right: auto;" onclick="showDeptLegend()" title="Department Legend"><i class="bi bi-card-text"></i></button>
+                        <button class="chart-info-btn" onclick="showChartInfo('deptFeeChart')" title="Details"><i class="bi bi-info-circle"></i></button>
+                        <canvas id="deptFeeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-white"><h6 class="mb-0">Department Health Table</h6></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Students</th>
+                                    <th>Faculty</th>
+                                    <th>Student:Faculty Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in stats.dept_health_table %}
+                                <tr>
+                                    <td class="fw-bold">{{ d.department_name }}</td>
+                                    <td>{{ d.students }}</td>
+                                    <td>{{ d.teachers }}</td>
+                                    <td>
+                                        {% if d.teachers > 0 %}
+                                            {{ (d.students / d.teachers)|round(2) }} : 1
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">No Department Data Available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === ZONE 6: ALERTS & ACTIVITY === -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0 text-danger">System Alerts</h6></div>
+                <div class="card-body">
+                    {% if low_attendance_count > 0 %}
+                    <div class="alert-widget">
+                        <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                        {{ low_attendance_count }} students have critical attendance (&lt; 75%)
+                    </div>
+                    {% endif %}
+                    {% if stats.sla_breached > 0 %}
+                    <div class="alert-widget">
+                        <i class="bi bi-clock-history text-danger me-2"></i>
+                        {{ stats.sla_breached }} complaints have crossed SLA threshold
+                    </div>
+                    {% endif %}
+                    {% if stats.tt_conflicts > 0 %}
+                    <div class="alert-widget">
+                        <i class="bi bi-calendar-x text-danger me-2"></i>
+                        {{ stats.tt_conflicts }} timetable conflicts detected
+                    </div>
+                    {% endif %}
+                    {% if stats.outstanding > 0 %}
+                    <div class="alert-widget" style="border-left-color: #ffc107; background: #fff9e6;">
+                        <i class="bi bi-cash-stack text-warning me-2"></i>
+                        ₹{{ "{:,.0f}".format(stats.outstanding) }} in outstanding fees pending
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white"><h6 class="mb-0">Recent System Activity</h6></div>
+                <div class="card-body">
+                    {% for log in stats.recent_activity %}
+                    <div class="activity-item d-flex justify-content-between">
+                        <span><i class="bi bi-person-check me-2 text-muted"></i> {{ log.action }}</span>
+                        <small class="text-muted">{{ log.log_time.strftime('%H:%M') }}</small>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">No recent activity</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Chart Information Modal -->
+<div class="modal fade" id="chartInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chartInfoModalTitle">Chart Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="chartInfoList" class="list-unstyled mb-0"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chart-info-btn {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        z-index: 999;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 11px;
+        color: #6c758d;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .chart-info-btn:hover {
+        color: #0d6efd;
+        background: #fff;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    // Safely parse data from backend
+    var deptLabels = {{ stats.dept_labels | tojson if stats.dept_labels else '[]' }};
+    var deptStudents = {{ stats.dept_student_counts | tojson if stats.dept_student_counts else '[]' }};
+    var deptTeachers = {{ stats.dept_teacher_counts | tojson if stats.dept_teacher_counts else '[]' }};
+
+    var totalCollected = {{ stats.total_collected if stats.total_collected else 0 }};
+    var totalOutstanding = {{ stats.outstanding if stats.outstanding else 0 }};
+
+    var feeTrendLabels = {{ stats.fee_trend_labels | tojson if stats.fee_trend_labels else '[]' }};
+    var feeTrendData = {{ stats.fee_trend_data | tojson if stats.fee_trend_data else '[]' }};
+
+    var deptFeeLabels = {{ stats.dept_fee_labels | tojson if stats.dept_fee_labels else '[]' }};
+    var deptFeePercentages = {{ stats.dept_fee_percentages | tojson if stats.dept_fee_percentages else '[]' }};
+
+    var publishedResults = {{ stats.published_results|default(0) }};
+    var draftResults = {{ stats.draft_results|default(0) }};
+
+    var attBracketsLabels = {{ stats.att_brackets_labels | tojson if stats.att_brackets_labels else '[]' }};
+    var attBracketsData = {{ stats.att_brackets_data | tojson if stats.att_brackets_data else '[]' }};
+
+    var gradeLabels = {{ stats.grade_labels | tojson if stats.grade_labels else '[]' }};
+    var gradeCounts = {{ stats.grade_counts | tojson if stats.grade_counts else '[]' }};
+
+    // --- Dynamic Abbreviation Function ---
+    function abbreviateName(name) {
+        if (!name) return "";
+        var words = name.split(" ");
+        var abbr = "";
+        for (var i = 0; i < words.length; i++) {
+            if (words[i].length > 0) {
+                abbr += words[i][0].toUpperCase();
+            }
+        }
+        if (abbr.length === 1) {
+            abbr = name.substring(0, 3).toUpperCase();
+        }
+        return abbr;
+    }
+
+    var deptShortLabels = deptLabels.map(abbreviateName);
+    var deptFeeShortLabels = deptFeeLabels.map(abbreviateName);
+
+    // 0. Attendance Brackets Doughnut Chart
+    new Chart(document.getElementById('attBracketChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: attBracketsLabels.length > 0 ? attBracketsLabels : ['No Data'],
+            datasets: [{
+                data: attBracketsData.length > 0 && attBracketsData.some(function(v) { return v > 0; }) ? attBracketsData : [1],
+                backgroundColor: ['#dc3545', '#ffc107', '#0d6efd', '#28a745'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 1. Grade Distribution Bar Chart
+    new Chart(document.getElementById('gradeDistChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: gradeLabels.length > 0 ? gradeLabels : ['No Data'],
+            datasets: [{
+                label: 'Students',
+                data: gradeCounts.length > 0 ? gradeCounts : [0],
+                backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    });
+
+    // 2. Result Status Doughnut Chart
+    new Chart(document.getElementById('resultDistChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Published', 'Draft/Pending'],
+            datasets: [{
+                data: (publishedResults === 0 && draftResults === 0) ? [1, 1] : [publishedResults, draftResults],
+                backgroundColor: ['#28a745', '#ffc107'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 3. Department Strength Bar Chart
+    new Chart(document.getElementById('deptStrengthChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: deptShortLabels.length > 0 ? deptShortLabels : ['No Data'],
+            datasets: [
+                { label: 'Students', data: deptStudents.length > 0 ? deptStudents : [0], backgroundColor: 'rgba(13, 110, 253, 0.7)', borderColor: 'rgba(13, 110, 253, 1)', borderWidth: 1 },
+                { label: 'Faculty', data: deptTeachers.length > 0 ? deptTeachers : [0], backgroundColor: 'rgba(25, 135, 84, 0.7)', borderColor: 'rgba(25, 135, 84, 1)', borderWidth: 1 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    });
+
+    // 4. Fee Ratio Doughnut Chart
+    new Chart(document.getElementById('feeRatioChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Collected', 'Outstanding'],
+            datasets: [{
+                data: (totalCollected === 0 && totalOutstanding === 0) ? [1, 1] : [totalCollected, totalOutstanding],
+                backgroundColor: ['#28a745', '#dc3545'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 5. Fee Collection Trend Line Chart
+    new Chart(document.getElementById('feeTrendChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: feeTrendLabels.length > 0 ? feeTrendLabels : ['No Data'],
+            datasets: [{
+                label: 'Amount Collected',
+                data: feeTrendData.length > 0 ? feeTrendData : [0],
+                borderColor: 'rgba(13, 110, 253, 1)',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    });
+
+    // 6. Department-wise Fee Collection Bar Chart
+    new Chart(document.getElementById('deptFeeChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: deptFeeShortLabels.length > 0 ? deptFeeShortLabels : ['No Data'],
+            datasets: [{
+                label: 'Collection %',
+                data: deptFeePercentages.length > 0 ? deptFeePercentages : [0],
+                backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                borderColor: 'rgba(255, 193, 7, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+
+    // --- Dynamic Card Info Logic ---
+    function showCardInfo(cardId) {
+        var title = "Card Information";
+        var points = [];
+
+        if (cardId === 'feeCollection') {
+            title = "Fee Collection Explained";
+            var demand = {{ stats.total_demand|default(0) }};
+            var collected = {{ stats.total_collected|default(0) }};
+            var perc = {{ stats.collection_percentage|default(0) }};
+            points.push('<strong>Total Demand:</strong> Rs. ' + demand.toLocaleString());
+            points.push('<strong>Collected:</strong> Rs. ' + collected.toLocaleString());
+            points.push('<strong>Collection Rate:</strong> ' + perc + '%');
+            points.push('<strong>Indicates:</strong> Overall fee recovery health. A rate below 50% is critical and requires immediate follow-up.');
+        }
+        else if (cardId === 'outstandingFees') {
+            title = "Outstanding Fees Explained";
+            var outstanding = {{ stats.outstanding|default(0) }};
+            points.push('<strong>Total Outstanding:</strong> Rs. ' + outstanding.toLocaleString());
+            points.push('<strong>Indicates:</strong> Total unpaid fees by students. A high value means many students have pending dues and fee defaulter notices may be needed.');
+        }
+        else if (cardId === 'complaints') {
+            title = "Complaints Explained";
+            var openComp = {{ stats.open_complaints|default(0) }};
+            var sla = {{ stats.sla_breached|default(0) }};
+            points.push('<strong>Open Complaints:</strong> ' + openComp);
+            points.push('<strong>SLA Breached:</strong> ' + sla);
+            points.push('<strong>Indicates:</strong> Unresolved student/admin issues. SLA breach means the response time has exceeded the allowed policy limit and needs urgent attention.');
+        }
+        else if (cardId === 'pendingApprovals') {
+            title = "Pending Approvals Explained";
+            var leaves = {{ stats.pending_leaves|default(0) }};
+            var tt = {{ stats.pending_timetable|default(0) }};
+            points.push('<strong>Pending Leaves:</strong> ' + leaves);
+            points.push('<strong>Pending Timetable Drafts:</strong> ' + tt);
+            points.push('<strong>Indicates:</strong> Admin workload. High numbers mean approvals are stuck and need immediate action to clear the queue.');
+        }
+        else if (cardId === 'avgAttendance') {
+            title = "Average Attendance Explained";
+            var avgAtt = {{ stats.avg_attendance|default(0) }};
+            points.push('<strong>College Average:</strong> ' + avgAtt + '%');
+            points.push('<strong>Indicates:</strong> Overall class presence. Below 75% is considered critical for academic compliance and may lead to detentions.');
+        }
+        else if (cardId === 'resultStatus') {
+            title = "Result Status Explained";
+            var pub = {{ stats.published_results|default(0) }};
+            var draft = {{ stats.draft_results|default(0) }};
+            points.push('<strong>Published Results:</strong> ' + pub);
+            points.push('<strong>Draft Results:</strong> ' + draft);
+            points.push('<strong>Indicates:</strong> Result publication workflow. Drafts are calculated but awaiting official release to students.');
+        }
+        else if (cardId === 'ttConflicts') {
+            title = "Timetable Conflicts Explained";
+            var conflicts = {{ stats.tt_conflicts|default(0) }};
+            points.push('<strong>Detected Conflicts:</strong> ' + conflicts);
+            points.push('<strong>Indicates:</strong> Overlapping teacher or room schedules. Conflicts must be resolved immediately before publishing the timetable to students.');
+        }
+        else if (cardId === 'lowAttendance') {
+            title = "Low Attendance Explained";
+            var lowAtt = {{ low_attendance_count|default(0) }};
+            points.push('<strong>Critical Students:</strong> ' + lowAtt);
+            points.push('<strong>Indicates:</strong> Students with attendance below 75%. They are at risk of failing the semester and parents may need to be notified.');
+        }
+
+        document.getElementById('chartInfoModalTitle').innerText = title;
+        var list = document.getElementById('chartInfoList');
+        var html = "";
+        for (var i = 0; i < points.length; i++) {
+            html += '<li class="mb-2"><i class="bi bi-check2-circle text-primary me-2"></i>' + points[i] + '</li>';
+        }
+        list.innerHTML = html;
+
+        var modal = new bootstrap.Modal(document.getElementById('chartInfoModal'));
+        modal.show();
+    }
+
+    // --- Dynamic Department Legend Logic ---
+    function showDeptLegend() {
+        var title = "Department Legend";
+        var points = [];
+        var combinedDepts = deptLabels.length > 0 ? deptLabels : deptFeeLabels;
+
+        if (combinedDepts.length === 0) {
+            points.push("No departments found.");
+        } else {
+            for (var i = 0; i < combinedDepts.length; i++) {
+                points.push("<strong>" + abbreviateName(combinedDepts[i]) + ":</strong> " + combinedDepts[i]);
+            }
+        }
+
+        document.getElementById('chartInfoModalTitle').innerText = title;
+        var list = document.getElementById('chartInfoList');
+        var html = "";
+        for (var i = 0; i < points.length; i++) {
+            html += '<li class="mb-2"><i class="bi bi-check2-circle text-primary me-2"></i>' + points[i] + '</li>';
+        }
+        list.innerHTML = html;
+
+        var modal = new bootstrap.Modal(document.getElementById('chartInfoModal'));
+        modal.show();
+    }
+
+    // --- Dynamic Chart Info Logic ---
+    function showChartInfo(chartId) {
+        var title = "Chart Information";
+        var points = [];
+        var maxVal, minVal, maxIdx, minIdx, sum, i;
+
+        if (chartId === 'attBracketChart') {
+            title = "Attendance Brackets Details";
+            sum = attBracketsData.reduce(function(a, b) { return a + b; }, 0);
+            points.push('<strong>Total students evaluated:</strong> ' + sum);
+            points.push('<strong>Critical (&lt;50%):</strong> ' + attBracketsData[0] + ' students');
+            points.push('<strong>At Risk (50-75%):</strong> ' + attBracketsData[1] + ' students');
+            points.push('<strong>Healthy (75-90%):</strong> ' + attBracketsData[2] + ' students');
+            points.push('<strong>Excellent (&gt;90%):</strong> ' + attBracketsData[3] + ' students');
+        }
+        else if (chartId === 'gradeDistChart') {
+            title = "Grade Distribution Details";
+            if (gradeLabels.length === 0) {
+                points.push("No published results found to calculate grades.");
+            } else {
+                sum = gradeCounts.reduce(function(a, b) { return a + b; }, 0);
+                points.push('<strong>Total students graded:</strong> ' + sum);
+                for (i = 0; i < gradeLabels.length; i++) {
+                    points.push('<strong>Grade ' + gradeLabels[i] + ':</strong> ' + gradeCounts[i] + ' students');
+                }
+            }
+        }
+        else if (chartId === 'resultDistChart') {
+            title = "Result Status Details";
+            var total = publishedResults + draftResults;
+            points.push('<strong>Total result records:</strong> ' + total);
+            points.push('<strong>Published:</strong> ' + publishedResults + ' results (visible to students).');
+            points.push('<strong>Draft/Pending:</strong> ' + draftResults + ' results (awaiting publication).');
+            var rate = total > 0 ? ((publishedResults / total) * 100).toFixed(2) : 0;
+            points.push('<strong>Publication Rate:</strong> ' + rate + '%');
+        }
+        else if (chartId === 'deptStrengthChart') {
+            title = "Department Strength Details";
+            if (deptShortLabels.length === 0) {
+                points.push("No department data available.");
+            } else {
+                points.push('<strong>Total departments analyzed:</strong> ' + deptShortLabels.length);
+                maxVal = Math.max.apply(null, deptStudents);
+                maxIdx = deptStudents.indexOf(maxVal);
+                points.push('<strong>Highest student strength:</strong> ' + deptLabels[maxIdx] + ' (' + maxVal + ' students)');
+                maxVal = Math.max.apply(null, deptTeachers);
+                maxIdx = deptTeachers.indexOf(maxVal);
+                points.push('<strong>Highest faculty strength:</strong> ' + deptLabels[maxIdx] + ' (' + maxVal + ' faculty)');
+            }
+        }
+        else if (chartId === 'feeRatioChart') {
+            title = "Fee Collection Ratio Details";
+            var demand = totalCollected + totalOutstanding;
+            points.push('<strong>Total Fee Demand:</strong> Rs. ' + demand.toLocaleString());
+            points.push('<strong>Amount Collected:</strong> Rs. ' + totalCollected.toLocaleString());
+            points.push('<strong>Outstanding Amount:</strong> Rs. ' + totalOutstanding.toLocaleString());
+            var crate = demand > 0 ? ((totalCollected / demand) * 100).toFixed(2) : 0;
+            points.push('<strong>Collection Efficiency:</strong> ' + crate + '%');
+        }
+        else if (chartId === 'feeTrendChart') {
+            title = "Fee Collection Trend Details";
+            if (feeTrendLabels.length === 0) {
+                points.push("No fee collection data available for the last 6 months.");
+            } else {
+                points.push('<strong>Data covers the last:</strong> ' + feeTrendLabels.length + ' months.');
+                sum = feeTrendData.reduce(function(a, b) { return a + b; }, 0);
+                points.push('<strong>Total collected in this period:</strong> Rs. ' + sum.toLocaleString());
+                maxVal = Math.max.apply(null, feeTrendData);
+                maxIdx = feeTrendData.indexOf(maxVal);
+                points.push('<strong>Highest collection month:</strong> ' + feeTrendLabels[maxIdx] + ' (Rs. ' + maxVal.toLocaleString() + ')');
+            }
+        }
+        else if (chartId === 'deptFeeChart') {
+            title = "Department-wise Fee Collection Details";
+            if (deptFeeShortLabels.length === 0) {
+                points.push("No department-wise fee data available.");
+            } else {
+                points.push('<strong>Departments analyzed:</strong> ' + deptFeeShortLabels.length);
+                maxVal = Math.max.apply(null, deptFeePercentages);
+                maxIdx = deptFeePercentages.indexOf(maxVal);
+                points.push('<strong>Best performing:</strong> ' + deptFeeLabels[maxIdx] + ' (' + maxVal + '% collected)');
+                minVal = Math.min.apply(null, deptFeePercentages);
+                minIdx = deptFeePercentages.indexOf(minVal);
+                points.push('<strong>Needs attention:</strong> ' + deptFeeLabels[minIdx] + ' (' + minVal + '% collected)');
+                var avg = (deptFeePercentages.reduce(function(a, b) { return a + b; }, 0) / deptFeePercentages.length).toFixed(2);
+                points.push('<strong>Average collection rate:</strong> ' + avg + '%');
+            }
+        }
+
+        document.getElementById('chartInfoModalTitle').innerText = title;
+        var list = document.getElementById('chartInfoList');
+        var html = "";
+        for (i = 0; i < points.length; i++) {
+            html += '<li class="mb-2"><i class="bi bi-check2-circle text-primary me-2"></i>' + points[i] + '</li>';
+        }
+        list.innerHTML = html;
+
+        var modal = new bootstrap.Modal(document.getElementById('chartInfoModal'));
+        modal.show();
+    }
+
+    // --- Counter Animation Logic ---
+    function animateCounters() {
+        var counters = document.querySelectorAll('.counter');
+        var duration = 1500; // Animation duration in ms
+
+        counters.forEach(function(counter) {
+            var target = parseInt(counter.getAttribute('data-target'));
+            var suffix = counter.getAttribute('data-suffix') || '';
+            var isCurrency = counter.getAttribute('data-format') === 'currency';
+            var startTime = null;
+
+            if (isNaN(target) || target === 0) {
+                counter.innerText = isCurrency ? '0' : '0' + suffix;
+                return;
+            }
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                var progress = Math.min((timestamp - startTime) / duration, 1);
+                var current = Math.floor(progress * target);
+
+                if (isCurrency) {
+                    counter.innerText = current.toLocaleString('en-IN');
+                } else {
+                    counter.innerText = current + suffix;
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    if (isCurrency) counter.innerText = target.toLocaleString('en-IN');
+                    else counter.innerText = target + suffix;
+                }
+            }
+            requestAnimationFrame(step);
+        });
+    }
+
+    // Trigger counter animation on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        animateCounters();
+    });
+</script>
+{% endblock %}

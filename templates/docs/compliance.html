@@ -1,0 +1,96 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Compliance Register{% endblock %}
+{% block page_title %}Affiliation & AICTE Compliance{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Compliance Requirements</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addReqModal">Add Requirement</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Body</th><th>Requirement</th><th>Dept</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in requirements %}
+                        <tr>
+                            <td class="fw-bold">{{ r.body_name }}</td>
+                            <td>{{ r.description }}</td>
+                            <td>{{ r.department_name or '-' }}</td>
+                            <td>{{ r.due_date or '-' }}</td>
+                            <td><span class="badge bg-{% if r.status == 'Verified' %}success{% elif r.status == 'Not Started' %}secondary{% elif r.status == 'Submitted' %}info{% else %}warning{% endif %}">{{ r.status }}</span></td>
+                            <td>
+                                <select class="form-select form-select-sm comp-status" data-id="{{ r.requirement_id }}">
+                                    <option value="Not Started" {% if r.status == 'Not Started' %}selected{% endif %}>Not Started</option>
+                                    <option value="In Progress" {% if r.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Submitted" {% if r.status == 'Submitted' %}selected{% endif %}>Submitted</option>
+                                    <option value="Verified" {% if r.status == 'Verified' %}selected{% endif %}>Verified</option>
+                                </select>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No requirements added.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Requirement Modal -->
+<div class="modal fade" id="addReqModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="reqForm">
+                <div class="modal-header"><h5 class="modal-title">Add Compliance Requirement</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Regulatory Body</label><input type="text" class="form-control" name="body_name" placeholder="e.g. AICTE, University" required></div>
+                    <div class="mb-3"><label class="form-label">Requirement Description</label><textarea class="form-control" name="description" rows="2" required></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6"><label class="form-label">Academic Year</label><input type="text" class="form-control" name="academic_year" placeholder="2024-25"></div>
+                        <div class="col-md-6"><label class="form-label">Due Date</label><input type="date" class="form-control" name="due_date"></div>
+                    </div>
+                    <div class="mt-3"><label class="form-label">Responsible Department</label>
+                        <select class="form-select" name="responsible_dept">
+                            <option value="">None</option>
+                            {% for d in departments %}<option value="{{ d.department_id }}">{{ d.department_name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Requirement</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("reqForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/admin/api/docs/compliance/add", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+});
+
+document.querySelectorAll('.comp-status').forEach(select => {
+    select.addEventListener('change', async function() {
+        const id = this.dataset.id;
+        const status = this.value;
+        const formData = new URLSearchParams();
+        formData.append("requirement_id", id);
+        formData.append("status", status);
+        const res = await fetch("/admin/api/docs/compliance/status", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+    });
+});
+</script>
+{% endblock %}

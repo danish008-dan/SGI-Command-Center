@@ -1,0 +1,96 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Action Items{% endblock %}
+{% block page_title %}Meeting Action Items Tracking{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Action Items</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addActionModal">Assign Action</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Task</th><th>Meeting</th><th>Assigned To</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for i in items %}
+                        <tr>
+                            <td>{{ i.description }}</td>
+                            <td><small class="text-muted">{{ i.meeting_title }}</small></td>
+                            <td>{{ i.assigned_to_name }}</td>
+                            <td>{{ i.due_date or '-' }}</td>
+                            <td><span class="badge bg-{% if i.status == 'Completed' %}success{% elif i.status == 'Open' %}warning{% else %}info{% endif %}">{{ i.status }}</span></td>
+                            <td>
+                                <select class="form-select form-select-sm act-status" data-id="{{ i.action_id }}">
+                                    <option value="Open" {% if i.status == 'Open' %}selected{% endif %}>Open</option>
+                                    <option value="In Progress" {% if i.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Completed" {% if i.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No action items.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Action Modal -->
+<div class="modal fade" id="addActionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="actionForm">
+                <div class="modal-header"><h5 class="modal-title">Assign Action Item</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Meeting</label>
+                        <select class="form-select" name="meeting_id" required>
+                            <option value="">Select Meeting</option>
+                            {% for m in meetings %}<option value="{{ m.meeting_id }}">{{ m.title }} ({{ m.meeting_date }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Task Description</label><textarea class="form-control" name="description" rows="2" required></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6"><label class="form-label">Assign To</label>
+                            <select class="form-select" name="assigned_to" required><option value="">Select</option>{% for u in users %}<option value="{{ u.user_id }}">{{ u.full_name }}</option>{% endfor %}</select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Due Date</label><input type="date" class="form-control" name="due_date"></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Assign Task</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("actionForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/admin/api/docs/action-items/add", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+});
+
+document.querySelectorAll('.act-status').forEach(select => {
+    select.addEventListener('change', async function() {
+        const id = this.dataset.id;
+        const status = this.value;
+        const formData = new URLSearchParams();
+        formData.append("action_id", id);
+        formData.append("status", status);
+        const res = await fetch("/admin/api/docs/action-items/status", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+    });
+});
+</script>
+{% endblock %}

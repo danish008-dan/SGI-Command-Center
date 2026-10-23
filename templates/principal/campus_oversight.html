@@ -1,0 +1,56 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}Campus Operations Oversight{% endblock %}
+{% block page_title %}Campus Operations Oversight{% endblock %}
+{% block content %}
+<div class="container-fluid" id="campusOversight">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/principal/api/campus", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const s = await res.json();
+    const c = document.getElementById("campusOversight");
+    c.innerHTML = `
+        <div class="row g-4 mb-4">
+            <div class="col-md-4 col-xl-3" data-aos="zoom-in">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                    <div><p class="mb-1 opacity-75">Active Assets</p><h2 class="mb-0">${s.active_assets}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-4 col-xl-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 shadow-sm rounded-4 p-3 ${s.low_stock > 0 ? 'bg-danger' : 'bg-success'} text-white h-100">
+                    <div><p class="mb-1 opacity-75">Low Stock Items</p><h2 class="mb-0">${s.low_stock}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-4 col-xl-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100">
+                    <div><p class="mb-1 opacity-75">Hostel Occupancy</p><h2 class="mb-0">${s.hostel_occupancy}%</h2><small class="opacity-75">Total Beds: ${s.total_beds}</small></div>
+                </div>
+            </div>
+            <div class="col-md-4 col-xl-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white h-100">
+                    <div><p class="mb-1 opacity-75">Pending Visitors</p><h2 class="mb-0">${s.pending_visitors}</h2></div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6" data-aos="fade-up">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0">Library Status</h5></div>
+                    <div class="card-body text-center"><h1 class="text-success">${s.books_available}</h1><p class="text-muted">Books Available</p></div>
+                </div>
+            </div>
+            <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0">Transport Status</h5></div>
+                    <div class="card-body text-center"><h1 class="text-primary">${s.transport_routes}</h1><p class="text-muted">Active Routes</p></div>
+                </div>
+            </div>
+        </div>`;
+    AOS.init();
+}
+loadData();
+</script>
+{% endblock %}

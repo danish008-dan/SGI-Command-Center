@@ -1,0 +1,89 @@
+<!-- templates/hod/student_profile.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Student Profile{% endblock %}
+{% block page_title %}Student Academic Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/hod/students" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Department Students
+    </a>
+</div>
+
+<div class="container-fluid" id="profileContainer">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading Profile...</p></div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+const studentId = "{{ student_id }}";
+
+async function loadProfile() {
+    try {
+        const res = await fetch(`/hod/api/students/${studentId}`, { headers: { "Authorization": "Bearer " + getToken() } });
+        if(!res.ok) throw new Error("Unauthorized or not found");
+        const p = await res.json();
+
+        const container = document.getElementById("profileContainer");
+        container.innerHTML = `
+            <div class="row g-4">
+                <!-- Basic Info -->
+                <div class="col-md-4" data-aos="fade-right">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3"><h5 class="mb-0 text-primary">${p.full_name}</h5></div>
+                        <div class="card-body">
+                            <p><b>Enrollment:</b> ${p.enrollment_no}</p>
+                            <p><b>Email:</b> ${p.email}</p>
+                            <p><b>Department:</b> ${p.department_name}</p>
+                            <p><b>Semester:</b> ${p.semester} (Sec: ${p.section || '-'})</p>
+                            <p><b>CGPA:</b> ${p.cgpa || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject-wise Attendance -->
+                <div class="col-md-8" data-aos="fade-left">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3"><h5 class="mb-0">Subject-wise Attendance</h5></div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light"><tr><th>Subject</th><th class="text-center">Present</th><th class="text-center">Total</th><th class="text-center">%</th></tr></thead>
+                                    <tbody>
+                                        ${p.attendance.map(a => `<tr><td>${a.subject_name}</td><td class="text-center">${a.present}</td><td class="text-center">${a.total_classes}</td><td class="text-center fw-bold ${a.percentage < 75 ? 'text-danger' : 'text-success'}">${a.percentage}%</td></tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted">No attendance records</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marks History -->
+                <div class="col-12" data-aos="fade-up">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3"><h5 class="mb-0">Marks History</h5></div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light"><tr><th>Subject</th><th>Exam Type</th><th class="text-center">Marks Obtained</th><th class="text-center">Max Marks</th><th class="text-center">Status</th></tr></thead>
+                                    <tbody>
+                                        ${p.marks.map(m => `<tr><td>${m.subject_name}</td><td>${m.exam_type}</td><td class="text-center">${m.obtained_marks}</td><td class="text-center">${m.maximum_marks}</td><td class="text-center"><span class="badge bg-${m.submission_status == 'Verified' ? 'success' : 'warning'}">${m.submission_status}</span></td></tr>`).join('') || '<tr><td colspan="5" class="text-center text-muted">No marks records</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch(err) {
+        document.getElementById("profileContainer").innerHTML = `<div class="alert alert-danger">Error loading profile or unauthorized access.</div>`;
+    }
+}
+loadProfile();
+</script>
+{% endblock %}

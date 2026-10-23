@@ -1,0 +1,41 @@
+<!-- templates/teacher/risk_indicators.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Academic Risk{% endblock %}
+{% block page_title %}Academic Risk Indicators{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0 text-danger">Low Attendance Students (<75%)</h5></div>
+        <div class="card-body" id="lowAttBody"><div class="text-center py-5"><div class="spinner-border text-primary"></div></div></div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0 text-warning">Missing / Pending Marks</h5></div>
+        <div class="card-body" id="missMarksBody"><div class="text-center py-5"><div class="spinner-border text-primary"></div></div></div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/risk-indicators", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+
+    const lab = document.getElementById("lowAttBody");
+    if(data.low_attendance.length === 0) lab.innerHTML = '<div class="alert alert-success">No students below 75%. Great!</div>';
+    else {
+        let h = `<table class="table table-sm"><thead><tr><th>Student</th><th>Subject</th><th class="text-center">Att %</th></tr></thead><tbody>`;
+        data.low_attendance.forEach(s => h += `<tr><td>${s.full_name}</td><td>${s.subject_name}</td><td class="text-center fw-bold text-danger">${s.att_perc}%</td></tr>`);
+        lab.innerHTML = h + '</tbody></table>';
+    }
+
+    const mmb = document.getElementById("missMarksBody");
+    if(data.missing_marks.length === 0) mmb.innerHTML = '<div class="alert alert-success">No missing marks records.</div>';
+    else {
+        let h = `<table class="table table-sm"><thead><tr><th>Student</th><th>Subject</th><th>Exam</th></tr></thead><tbody>`;
+        data.missing_marks.forEach(s => h += `<tr><td>${s.full_name}</td><td>${s.subject_name}</td><td>${s.exam_type}</td></tr>`);
+        mmb.innerHTML = h + '</tbody></table>';
+    }
+}
+loadData();
+</script>
+{% endblock %}

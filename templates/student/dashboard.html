@@ -1,0 +1,221 @@
+<!-- templates/student/dashboard.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block page_title %}Student Command Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="dashboardContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Loading Dashboard...</p>
+    </div>
+</div>
+
+<style>
+    /* Custom Square Card Styling for Row 3 */
+    .square-card {
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+    }
+    .square-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    }
+    .square-card .icon-bg {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        font-size: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadDashboard() {
+    const token = getToken();
+    if (!token) { window.location.href = "/login"; return; }
+
+    try {
+        const res = await fetch("/student/api/dashboard", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = "/login";
+            return;
+        }
+
+        const data = await res.json();
+        const container = document.getElementById("dashboardContent");
+
+        if (data.error) {
+            container.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            return;
+        }
+
+        let scheduleHtml = '<p class="text-muted text-center py-2">No classes scheduled for today.</p>';
+        if (data.today_schedule && data.today_schedule.length > 0) {
+            scheduleHtml = `<div class="list-group">`;
+            data.today_schedule.forEach(c => {
+                scheduleHtml += `
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-primary">${c.subject_name}</h6>
+                            <small class="text-muted">${c.teacher_name} | Room: ${c.room_number}</small>
+                        </div>
+                        <span class="badge bg-info rounded-pill">${c.start_time} - ${c.end_time}</span>
+                    </div>
+                `;
+            });
+            scheduleHtml += '</div>';
+        }
+
+        container.innerHTML = `
+            <!-- Row 1: Top Academic & Financial Summary (4 Cards) -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in">
+                    <a href="/student/attendance" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                            <div class="d-flex justify-content-between">
+                                <div><p class="mb-1 opacity-75 small">Overall Attendance</p><h4 class="mb-0">${data.attendance_pct || 0}%</h4></div>
+                                <i class="bi bi-calendar-check-fill fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div><p class="mb-1 opacity-75 small">Pending Fees</p><h4 class="mb-0">₹${data.pending_fee.toLocaleString()}</h4></div>
+                            <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+                    <a href="/student/result" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100">
+                            <div class="d-flex justify-content-between">
+                                <div><p class="mb-1 opacity-75 small">Latest SGPA</p><h4 class="mb-0">${data.latest_sgpa || 'N/A'}</h4></div>
+                                <i class="bi bi-star-fill fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+                    <a href="/student/jarvis" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                            <div class="d-flex justify-content-between">
+                                <div><p class="mb-1 opacity-75 small">JARVIS AI</p><h4 class="mb-0">Ask Assistant</h4></div>
+                                <i class="bi bi-robot fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Row 2: Today's Schedule (8 cols) & Quick Actions (4 cols) -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-8" data-aos="fade-up">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-primary-custom"><i class="bi bi-calendar-day me-2"></i>Today's Schedule</h5>
+                            <a href="/student/timetable" class="btn btn-sm btn-link">Full Timetable</a>
+                        </div>
+                        <div class="card-body">
+                            ${scheduleHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3"><h5 class="mb-0 text-primary-custom"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h5></div>
+                        <div class="card-body d-grid gap-2">
+                            <a href="/student/fees" class="btn btn-outline-primary text-start"><i class="bi bi-credit-card me-2"></i> Pay Fees Online</a>
+                            <a href="/student/marks" class="btn btn-outline-primary text-start"><i class="bi bi-journal-text me-2"></i> View Internal Marks</a>
+                            <a href="/student/complaints" class="btn btn-outline-primary text-start"><i class="bi bi-exclamation-octagon me-2"></i> Register Grievance</a>
+                            <a href="/student/placement" class="btn btn-outline-primary text-start"><i class="bi bi-file-earmark-pdf me-2"></i> Analyze Resume</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: 4 Square Informative Cards -->
+            <div class="row g-3">
+                <!-- Pending Assignments -->
+                <div class="col-md-6 col-xl-3" data-aos="zoom-in">
+                    <a href="/student/assignments" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 h-100 square-card bg-light">
+                            <div class="icon-bg bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-journal-text"></i>
+                            </div>
+                            <h3 class="mb-0 text-dark">${data.pending_assignments || 0}</h3>
+                            <p class="text-muted small mb-0 mt-1">Pending Assignments</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Recent Notices -->
+                <div class="col-md-6 col-xl-3" data-aos="zoom-in" data-aos-delay="100">
+                    <a href="/student/notices" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 h-100 square-card bg-light">
+                            <div class="icon-bg bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-megaphone"></i>
+                            </div>
+                            <h3 class="mb-0 text-dark">${data.recent_notices || 0}</h3>
+                            <p class="text-muted small mb-0 mt-1">Recent Notices</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Resume ATS Score -->
+                <div class="col-md-6 col-xl-3" data-aos="zoom-in" data-aos-delay="200">
+                    <a href="/student/placement" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 h-100 square-card bg-light">
+                            <div class="icon-bg bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </div>
+                            <h3 class="mb-0 text-dark">${data.resume_score || 0}<small class="fs-6 text-muted">/100</small></h3>
+                            <p class="text-muted small mb-0 mt-1">Resume ATS Score</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Active Placement Applications -->
+                <div class="col-md-6 col-xl-3" data-aos="zoom-in" data-aos-delay="300">
+                    <a href="/student/placement" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 h-100 square-card bg-light">
+                            <div class="icon-bg bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-briefcase"></i>
+                            </div>
+                            <h3 class="mb-0 text-dark">${data.active_applications || 0}</h3>
+                            <p class="text-muted small mb-0 mt-1">Active Applications</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        `;
+        AOS.init();
+
+    } catch (error) {
+        document.getElementById("dashboardContent").innerHTML = `<div class="alert alert-danger">Error loading dashboard. Check console for details.</div>`;
+        console.error("Dashboard Error:", error);
+    }
+}
+
+loadDashboard();
+</script>
+{% endblock %}

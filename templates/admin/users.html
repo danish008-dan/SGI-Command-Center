@@ -1,0 +1,89 @@
+<!-- templates/admin/users.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}User Management{% endblock %}
+{% block page_title %}User Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">System Users Directory</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th><th>Email</th><th>Role</th><th>Dept</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td class="fw-bold">{{ u.full_name }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                <!-- SECURITY FIX: Role is now a static badge, no dropdown -->
+                                <span class="badge bg-{% if u.role == 'Admin' %}danger{% elif u.role == 'Principal' %}primary{% elif u.role == 'HOD' %}info{% elif u.role == 'Teacher' %}success{% else %}secondary{% endif %}">{{ u.role }}</span>
+                            </td>
+                            <td>{{ u.department_name or '-' }}</td>
+                            <td><span class="badge bg-{% if u.status == 'Active' %}success{% else %}danger{% endif %}">{{ u.status }}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-warning reset-btn" data-id="{{ u.user_id }}">Reset Pass</button>
+                                <button class="btn btn-sm btn-outline-{% if u.status == 'Active' %}danger{% else %}success{% endif %} toggle-btn"
+                                        data-id="{{ u.user_id }}" data-status="{{ u.status }}">
+                                    {% if u.status == 'Active' %}Deactivate{% else %}Activate{% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+// Toggle Status
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const status = this.dataset.status;
+        if(!confirm(`Are you sure you want to ${status == 'Active' ? 'DEACTIVATE' : 'ACTIVATE'} this user?`)) return;
+
+        const formData = new URLSearchParams();
+        formData.append("user_id", id);
+        formData.append("status", status);
+
+        const res = await fetch("/admin/api/users/toggle", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) location.reload();
+    });
+});
+
+// Reset Password
+document.querySelectorAll('.reset-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        if(!confirm("Initiate secure password reset for this user?")) return;
+
+        const formData = new URLSearchParams();
+        formData.append("user_id", id);
+
+        const res = await fetch("/admin/api/users/reset", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+    });
+});
+
+// SECURITY FIX: Removed the 'Assign Role' JavaScript logic entirely.
+// Roles can no longer be changed from this table.
+</script>
+{% endblock %}

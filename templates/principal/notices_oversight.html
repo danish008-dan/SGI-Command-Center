@@ -1,0 +1,38 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}Notices & Events Oversight{% endblock %}
+{% block page_title %}Notices & Events{% endblock %}
+{% block content %}
+<div class="container-fluid" id="noticesOversight">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/principal/api/notices", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const s = await res.json();
+    const c = document.getElementById("noticesOversight");
+    c.innerHTML = `
+        <div class="row g-4 mb-4">
+            <div class="col-md-4" data-aos="zoom-in">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                    <div><p class="mb-1 opacity-75">Published Notices</p><h2 class="mb-0">${s.published_notices}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white h-100">
+                    <div><p class="mb-1 opacity-75">Pending Approvals</p><h2 class="mb-0">${s.pending_notices}</h2>
+                    <a href="/principal/notice-approvals" class="text-white mt-2 d-block">Go to Approvals <i class="bi bi-arrow-right"></i></a></div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                    <div><p class="mb-1 opacity-75">Upcoming Events</p><h2 class="mb-0">${s.upcoming_events}</h2></div>
+                </div>
+            </div>
+        </div>`;
+    AOS.init();
+}
+loadData();
+</script>
+{% endblock %}

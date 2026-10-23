@@ -1,0 +1,82 @@
+<!-- templates/hod/students.html -->
+{% extends "hod/hod_layout.html" %}
+
+{% block title %}Student Academic Management{% endblock %}
+{% block page_title %}Department Students{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Student Directory</h5>
+            <div class="d-flex gap-2">
+                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search name or enrollment..." style="width: 200px;">
+                <select id="semesterFilter" class="form-select form-select-sm" style="width: 100px;">
+                    <option value="">All Sem</option>
+                    <option value="1">Sem 1</option>
+                    <option value="2">Sem 2</option>
+                    <option value="3">Sem 3</option>
+                    <option value="4">Sem 4</option>
+                    <option value="5">Sem 5</option>
+                    <option value="6">Sem 6</option>
+                    <option value="7">Sem 7</option>
+                    <option value="8">Sem 8</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="loadStudents()"><i class="bi bi-search"></i></button>
+            </div>
+        </div>
+        <div class="card-body" id="studentsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading Students...</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadStudents() {
+    const search = document.getElementById("searchInput").value;
+    const semester = document.getElementById("semesterFilter").value;
+    const body = document.getElementById("studentsBody");
+
+    body.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>`;
+
+    let url = `/hod/api/students?search=${encodeURIComponent(search)}`;
+    if(semester) url += `&semester=${semester}`;
+
+    try {
+        const res = await fetch(url, { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+
+        if(data.students.length === 0) {
+            body.innerHTML = '<p class="text-center text-muted py-4">No students found matching your criteria.</p>';
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Enrollment No</th><th>Student Name</th><th>Semester</th><th>Section</th><th>CGPA</th><th class="text-end">Action</th></tr></thead>
+            <tbody>`;
+
+        data.students.forEach(s => {
+            html += `<tr>
+                <td>${s.enrollment_no}</td>
+                <td>${s.full_name}</td>
+                <td>${s.semester}</td>
+                <td>${s.section || '-'}</td>
+                <td>${s.cgpa || '-'}</td>
+                <td class="text-end"><a href="/hod/students/${s.student_id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View Profile</a></td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        body.innerHTML = html;
+    } catch(err) {
+        body.innerHTML = '<div class="alert alert-danger">Failed to load students.</div>';
+    }
+}
+
+loadStudents();
+</script>
+{% endblock %}

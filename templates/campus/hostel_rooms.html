@@ -1,0 +1,78 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Hostel Management{% endblock %}
+{% block page_title %}Hostel Room & Bed Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Hostel Rooms</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRoomModal">Add Room</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Hostel</th><th>Floor</th><th>Room No</th><th>Type</th><th>Capacity</th><th>Occupied</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rooms %}
+                        <tr>
+                            <td class="fw-bold">{{ r.hostel_name }}</td>
+                            <td>{{ r.floor }}</td>
+                            <td>{{ r.room_number }}</td>
+                            <td><span class="badge bg-info">{{ r.room_type }}</span></td>
+                            <td>{{ r.capacity }}</td>
+                            <td>{{ r.occupied_beds }} / {{ r.capacity }}</td>
+                            <td><span class="badge bg-{% if r.status == 'Active' %}success{% else %}danger{% endif %}">{{ r.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No rooms added yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="roomForm">
+                <div class="modal-header"><h5 class="modal-title">Add Hostel Room</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Hostel Name</label><input type="text" class="form-control" name="hostel_name" placeholder="e.g. Boys Hostel 1" required></div>
+                        <div class="col-md-3"><label class="form-label">Floor</label><input type="text" class="form-control" name="floor" placeholder="1" required></div>
+                        <div class="col-md-3"><label class="form-label">Room No</label><input type="text" class="form-control" name="room_number" placeholder="101" required></div>
+                        <div class="col-md-4"><label class="form-label">Capacity (Beds)</label><input type="number" class="form-control" name="capacity" value="1" min="1" max="4" required></div>
+                        <div class="col-md-4"><label class="form-label">Room Type</label>
+                            <select class="form-select" name="room_type">
+                                <option>Non-AC</option><option>AC</option><option>Deluxe</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Room & Beds</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("roomForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/campus/hostel/rooms/add", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!-- templates/teacher/audit.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}My Activity{% endblock %}
+{% block page_title %}Audit & Activity Trail{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Recent Actions (Last 20)</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Target Module</th>
+                            <th>Target ID</th>
+                            <th>Source</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditBody">
+                        <tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/audit", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const tbody = document.getElementById("auditBody");
+
+    if(data.audit_trail.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No recent activity recorded.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.audit_trail.map(a => `
+        <tr>
+            <td><b>${a.action}</b></td>
+            <td>${a.target_table || 'N/A'}</td>
+            <td>${a.target_id || 'N/A'}</td>
+            <td><span class="badge bg-${a.source_interface === 'AI Agent' ? 'info' : 'secondary'}">${a.source_interface}</span></td>
+            <td>${new Date(a.log_time).toLocaleString()}</td>
+        </tr>
+    `).join('');
+}
+loadData();
+</script>
+{% endblock %}

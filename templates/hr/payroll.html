@@ -1,0 +1,107 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Payroll Processing{% endblock %}
+{% block page_title %}Monthly Payroll Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Create Period & List -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Payroll Periods</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPeriodModal">Create Period</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>Month</th><th>Year</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for p in periods %}
+                        <tr>
+                            <td>{{ p.month }}</td><td>{{ p.year }}</td>
+                            <td><span class="badge bg-{% if p.status == 'Open' %}info{% elif p.status == 'Processing' %}warning{% else %}success{% endif %}">{{ p.status }}</span></td>
+                            <td><a href="/admin/hr/payroll/{{ p.period_id }}" class="btn btn-sm btn-outline-primary">View Runs</a></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No periods created.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if current_period %}
+    <!-- Payroll Runs for Selected Period -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Payroll Runs (Period ID: {{ current_period }})</h5>
+            <form action="/admin/api/hr/payroll/generate" method="POST" class="d-inline">
+                <input type="hidden" name="period_id" value="{{ current_period }}">
+                <button type="submit" class="btn btn-success btn-sm">Calculate/Generate Payroll</button>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>Employee</th><th>Designation</th><th>Payable Days</th><th>Gross</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for r in runs %}
+                        <tr>
+                            <td>{{ r.full_name }} ({{ r.employee_code }})</td>
+                            <td>{{ r.designation }}</td>
+                            <td>{{ r.payable_days }} / {{ r.calendar_days }}</td>
+                            <td>₹{{ "%.2f"|format(r.gross_earnings) }}</td>
+                            <td>₹{{ "%.2f"|format(r.total_deductions) }}</td>
+                            <td class="fw-bold">₹{{ "%.2f"|format(r.net_payable) }}</td>
+                            <td><span class="badge bg-{% if r.status == 'Draft' %}secondary{% elif r.status == 'Calculated' %}info{% elif r.status == 'Under Review' %}warning{% elif r.status == 'Approved' %}primary{% elif r.status == 'Finalized' %}success{% else %}dark{% endif %}">{{ r.status }}</span></td>
+                            <td>
+                                <!-- Merged Action Column -->
+                                <form action="/admin/api/hr/payroll/process" method="POST" class="d-inline">
+                                    <input type="hidden" name="run_id" value="{{ r.run_id }}">
+                                    {% if r.status == 'Calculated' %}
+                                    <button type="submit" name="action" value="Under Review" class="btn btn-sm btn-warning">Submit Review</button>
+                                    {% elif r.status == 'Under Review' %}
+                                    <button type="submit" name="action" value="Approved" class="btn btn-sm btn-success">Approve</button>
+                                    {% elif r.status == 'Approved' %}
+                                    <button type="submit" name="action" value="Finalized" class="btn btn-sm btn-primary">Finalize</button>
+                                    {% elif r.status == 'Finalized' %}
+                                    <button type="submit" name="action" value="Paid" class="btn btn-sm btn-dark">Mark Paid</button>
+                                    {% endif %}
+                                </form>
+
+                                {% if r.status == 'Finalized' or r.status == 'Paid' %}
+                                <a href="/admin/hr/payslip/{{ r.run_id }}/pdf" class="btn btn-sm btn-outline-danger" target="_blank">
+                                    <i class="bi bi-file-pdf"></i> Payslip
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="8" class="text-center text-muted py-3">No payroll runs generated yet. Click "Calculate".</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Period Modal -->
+<div class="modal fade" id="addPeriodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/admin/api/hr/payroll/period/add" method="POST">
+                <div class="modal-header"><h5 class="modal-title">Create Payroll Period</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-6"><label class="form-label">Month</label><select name="month" class="form-select">{% for i in range(1, 13) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></div>
+                        <div class="col-6"><label class="form-label">Year</label><input type="number" name="year" class="form-control" value="2024" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Create</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

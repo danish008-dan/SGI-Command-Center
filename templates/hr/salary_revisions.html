@@ -1,0 +1,61 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Salary Revisions{% endblock %}
+{% block page_title %}Pending Salary Revisions & Increments{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Approval Requests</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Employee</th><th>Component</th><th>Old Amt</th><th>New Amt</th><th>Effective Date</th><th>Reason</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in revisions %}
+                        <tr>
+                            <td>{{ r.employee_name }} <small class="text-muted">({{ r.employee_code }})</small></td>
+                            <td>{{ r.component_name }}</td>
+                            <td>₹{{ "%.2f"|format(r.old_amount) }}</td>
+                            <td class="fw-bold text-success">₹{{ "%.2f"|format(r.new_amount) }}</td>
+                            <td>{{ r.effective_date }}</td>
+                            <td>{{ r.reason }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success approve-rev-btn" data-id="{{ r.revision_id }}">Approve</button>
+                                <button class="btn btn-sm btn-danger reject-rev-btn" data-id="{{ r.revision_id }}">Reject</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No pending revision requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function handleRevision(id, action) {
+    if(!confirm(`Are you sure you want to ${action} this revision?`)) return;
+    const formData = new URLSearchParams();
+    formData.append("revision_id", id);
+    formData.append("action", action);
+    
+    const res = await fetch("/admin/api/hr/salary/revisions/process", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+}
+
+document.querySelectorAll('.approve-rev-btn').forEach(btn => {
+    btn.addEventListener('click', function() { handleRevision(this.dataset.id, 'Approved'); });
+});
+document.querySelectorAll('.reject-rev-btn').forEach(btn => {
+    btn.addEventListener('click', function() { handleRevision(this.dataset.id, 'Rejected'); });
+});
+</script>
+{% endblock %}

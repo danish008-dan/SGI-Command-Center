@@ -1,0 +1,94 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Campus Operations{% endblock %}
+{% block page_title %}Campus Operations Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards Row 1 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Hostel Beds</p>
+                <h3 class="cmd-stat-value">{{ stats.total_beds }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Beds Occupied</p>
+                <h3 class="cmd-stat-value text-danger">{{ stats.occupied }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Beds Available</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.available }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Pending Applications</p>
+                <h3 class="cmd-stat-value text-warning">{{ stats.pending_apps }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards Row 2 (More Interactive) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-info">
+                <p class="cmd-stat-label">Total Vehicles</p>
+                <h3 class="cmd-stat-value text-info">{{ stats.total_vehicles }}</h3>
+                <a href="/admin/campus/transport" class="small text-muted">View Transport</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-primary">
+                <p class="cmd-stat-label">Total Books</p>
+                <h3 class="cmd-stat-value text-primary">{{ stats.total_titles }}</h3>
+                <a href="/admin/campus/library" class="small text-muted">View Library</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-warning">
+                <p class="cmd-stat-label">Books Issued</p>
+                <h3 class="cmd-stat-value text-warning">{{ stats.issued_books }}</h3>
+                <a href="/admin/campus/library" class="small text-muted">View Circulation</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-success">
+                <p class="cmd-stat-label">Today's Visitors</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.today_visits }}</h3>
+                <a href="/admin/campus/visitors" class="small text-muted">View Visitors</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Recent Campus Activity</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Activity Type</th><th>Details</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for a in recent_activity %}
+                        <tr>
+                            <td class="fw-bold"><span class="badge bg-{% if a.type == 'Hostel' %}info{% elif a.type == 'Library' %}success{% elif a.type == 'Visitor' %}primary{% else %}warning{% endif %}">{{ a.type }}</span></td>
+                            <td>{{ a.details }}</td>
+                            <td>{{ a.date }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">No recent activity.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

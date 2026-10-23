@@ -1,0 +1,183 @@
+<!-- templates/principal/dashboard.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}Executive Dashboard{% endblock %}
+{% block page_title %}Executive Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="principalDashboard">
+    <div id="loadingSpinner" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Executive Analytics...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadDashboard() {
+    const token = getToken();
+    if (!token) { window.location.href = "/login"; return; }
+
+    try {
+        const res = await fetch("/principal/api/dashboard", { headers: { "Authorization": "Bearer " + token } });
+        if (res.status === 401) { window.location.href = "/login"; return; }
+        const data = await res.json();
+
+        const container = document.getElementById("principalDashboard");
+        const s = data.stats;
+        const p = data.total_pending_actions;
+
+        let deptRows = "";
+        if (data.departments.length === 0) {
+            deptRows = '<tr><td colspan="3" class="text-center text-muted">No data available</td></tr>';
+        } else {
+            data.departments.forEach(d => {
+                deptRows += `<tr><td><b>${d.department_name}</b></td><td class="text-center">${d.student_count}</td><td class="text-center">${d.teacher_count}</td></tr>`;
+            });
+        }
+
+        container.innerHTML = `
+            <!-- Today's Priorities Alert -->
+            <div class="alert alert-warning d-flex align-items-center shadow-sm" role="alert" data-aos="fade-down">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div>
+                    <b>Today's Priorities:</b> You have <b>${p} pending actions</b> requiring your authorization.
+                </div>
+            </div>
+
+            <!-- Top Executive KPI Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Total Students</p>
+                                <h2 class="mb-0">${s.students}</h2>
+                            </div>
+                            <i class="bi bi-mortarboard-fill fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Total Faculty</p>
+                                <h2 class="mb-0">${s.teachers}</h2>
+                            </div>
+                            <i class="bi bi-person-badge-fill fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Departments</p>
+                                <h2 class="mb-0">${s.departments}</h2>
+                            </div>
+                            <i class="bi bi-building-fill fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Pending Fees</p>
+                                <h2 class="mb-0">₹${s.pending.toLocaleString()}</h2>
+                            </div>
+                            <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Health & Academic Health -->
+            <div class="row g-4 mb-4">
+                <!-- Financial Health -->
+                <div class="col-md-6" data-aos="fade-up">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Financial Health</h5>
+                            <i class="bi bi-graph-up-arrow text-success"></i>
+                        </div>
+                        <div class="card-body text-center">
+                            <h1 class="display-5 fw-bold text-success">₹ ${s.collected.toLocaleString()}</h1>
+                            <p class="text-muted mb-0">Total Revenue Collected</p>
+                            <hr class="my-3">
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <h6 class="text-warning">₹${s.pending.toLocaleString()}</h6>
+                                    <small class="text-muted">Outstanding</small>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="text-primary">${s.pending_concessions}</h6>
+                                    <small class="text-muted">Pending Concessions</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic & Compliance Health -->
+                <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Academic & Compliance Health</h5>
+                            <i class="bi bi-activity text-info"></i>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Result Approvals Pending
+                                    <span class="badge bg-primary rounded-pill">${s.pending_results}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Notice Approvals Pending
+                                    <span class="badge bg-secondary rounded-pill">${s.pending_notices}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Compliance Actions Due
+                                    <span class="badge bg-warning text-dark rounded-pill">${s.pending_compliance}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department-wise Strength -->
+            <div class="row g-4">
+                <div class="col-12" data-aos="fade-up">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3"><h5 class="mb-0">Department-wise Strength</h5></div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Department</th>
+                                            <th class="text-center">Students</th>
+                                            <th class="text-center">Faculty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${deptRows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch (error) {
+        document.getElementById("principalDashboard").innerHTML = `<div class="alert alert-danger">Error loading executive dashboard.</div>`;
+    }
+}
+loadDashboard();
+</script>
+{% endblock %}

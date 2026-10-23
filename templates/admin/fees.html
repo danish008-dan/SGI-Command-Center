@@ -1,0 +1,358 @@
+<!-- templates/admin/fees.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Fee Management{% endblock %}
+{% block page_title %}Fee Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex flex-column h-100">
+
+    <!-- Dashboard Stats -->
+    <div class="row g-2 mb-2 flex-shrink-0">
+        <div class="col-md-4" data-aos="zoom-in">
+            <div class="card border-0 shadow-sm rounded-4 p-2 bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><p class="mb-0 opacity-75 small">Total Collected</p><h5 class="mb-0">₹ {{ "%.0f"|format(stats.collected) }}</h5></div>
+                    <i class="bi bi-cash-stack fs-2 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+            <div class="card border-0 shadow-sm rounded-4 p-2 bg-danger text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><p class="mb-0 opacity-75 small">Pending Fees</p><h5 class="mb-0">₹ {{ "%.0f"|format(stats.pending) }}</h5></div>
+                    <i class="bi bi-exclamation-triangle fs-2 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+            <div class="card border-0 shadow-sm rounded-4 p-2 bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><p class="mb-0 opacity-75 small">Today's Collection</p><h5 class="mb-0">₹ {{ "%.0f"|format(stats.today) }}</h5></div>
+                    <i class="bi bi-calendar-day fs-2 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forms Row -->
+    <div class="row g-2 mb-2 flex-shrink-0">
+        <!-- Add Fee Structure -->
+        <div class="col-md-6" data-aos="fade-up">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="bi bi-plus-circle"></i> Create Fee Structure</h6></div>
+                <div class="card-body p-2">
+                    <form id="fsForm" class="row g-2">
+                        <div class="col-6">
+                            <select class="form-select form-select-sm" name="department_id" required>
+                                <option value="">Department</option>
+                                {% for d in departments %}<option value="{{ d.department_id }}">{{ d.department_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-3"><input type="number" class="form-control form-control-sm" name="semester" placeholder="Sem" required></div>
+                        <div class="col-3"><input type="text" class="form-control form-control-sm" name="academic_year" placeholder="Year (2024-25)" required></div>
+                        <div class="col-3"><input type="text" class="form-control form-control-sm" name="course" placeholder="Course"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="tuition_fee" placeholder="Tuition Fee" step="0.01"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="admission_fee" placeholder="Admission Fee" step="0.01"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="lab_fee" placeholder="Lab Fee" step="0.01"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="examination_fee" placeholder="Exam Fee" step="0.01"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="library_fee" placeholder="Library Fee" step="0.01"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="other_fee" placeholder="Other Fee" step="0.01"></div>
+                        <div class="col-12 mt-1"><button type="submit" class="btn btn-sm btn-primary w-100">Save Structure</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assign Fee to Student -->
+        <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="bi bi-person-check"></i> Assign Fee to Student</h6></div>
+                <div class="card-body p-2">
+                    <form id="assignForm" class="row g-2">
+                        <div class="col-12">
+                            <select class="form-select form-select-sm" name="student_id" required>
+                                <option value="">Select Student</option>
+                                {% for s in students %}<option value="{{ s.student_id }}">{{ s.full_name }} ({{ s.enrollment_no }})</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <select class="form-select form-select-sm" name="fee_structure_id" required>
+                                <option value="">Select Fee Structure</option>
+                                {% for fs in fee_structures %}<option value="{{ fs.fee_structure_id }}">{{ fs.department_name }} Sem {{ fs.semester }} (₹{{ fs.total_fee }})</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="discount" placeholder="Discount" step="0.01"></div>
+                        <div class="col-4"><input type="number" class="form-control form-control-sm" name="scholarship" placeholder="Scholarship" step="0.01"></div>
+                        <div class="col-4"><input type="date" class="form-control form-control-sm" name="due_date" required></div>
+                        <div class="col-12 mt-1"><button type="submit" class="btn btn-sm btn-primary w-100">Assign Fee</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Assign Fee Card -->
+    <div class="col-md-12 mb-2" data-aos="fade-up">
+        <div class="card shadow-sm h-100 border-primary">
+            <div class="card-header bg-white py-2"><h6 class="mb-0 small text-primary"><i class="bi bi-people"></i> Bulk Assign Fee to Class</h6></div>
+            <div class="card-body p-2">
+                <form id="bulkAssignForm" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Department</label>
+                        <select class="form-select form-select-sm" name="department_id" required>
+                            <option value="">Dept</option>
+                            {% for d in departments %}<option value="{{ d.department_id }}">{{ d.department_name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small text-muted mb-1">Sem</label>
+                        <input type="number" class="form-control form-control-sm" name="semester" placeholder="3" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small text-muted mb-1">Sec</label>
+                        <input type="text" class="form-control form-control-sm" name="section" placeholder="A" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Fee Structure</label>
+                        <select class="form-select form-select-sm" name="fee_structure_id" required>
+                            <option value="">Select</option>
+                            {% for fs in fee_structures %}<option value="{{ fs.fee_structure_id }}">{{ fs.department_name }} Sem {{ fs.semester }} (₹{{ fs.total_fee }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">Discount</label>
+                        <input type="number" class="form-control form-control-sm" name="discount" placeholder="0" step="0.01">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">Due Date</label>
+                        <input type="date" class="form-control form-control-sm" name="due_date" required>
+                    </div>
+                    <div class="col-12 mt-1"><button type="submit" class="btn btn-sm btn-outline-primary w-100">Assign to Whole Class</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="row g-2 flex-grow-1 overflow-hidden">
+
+        <!-- Collect Payment -->
+        <div class="col-md-5 d-flex flex-column" data-aos="fade-up">
+            <div class="card shadow-sm flex-grow-1">
+                <div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="bi bi-credit-card"></i> Collect Fee Payment</h6></div>
+                <div class="card-body p-2">
+                    <form id="payForm" class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small text-muted mb-1">Student</label>
+                            <select class="form-select form-select-sm" id="payStudent" required>
+                                <option value="">Select Student</option>
+                                {% for s in students %}<option value="{{ s.student_id }}">{{ s.full_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-muted mb-1">Payable</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="payable" readonly placeholder="0.00">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-muted mb-1">Paid</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="paid" readonly placeholder="0.00">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-muted mb-1">Balance</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="balance" readonly placeholder="0.00">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Amount</label>
+                            <input type="number" class="form-control form-control-sm" name="amount" id="payAmount" required step="0.01">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Mode</label>
+                            <select class="form-select form-select-sm" name="payment_mode">
+                                <option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Txn ID</label>
+                            <input type="text" class="form-control form-control-sm" name="transaction_id">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Remarks</label>
+                            <input type="text" class="form-control form-control-sm" name="remarks">
+                        </div>
+                        <input type="hidden" name="student_fee_id" id="studentFeeId">
+                        <div class="col-12 mt-2"><button type="submit" class="btn btn-sm btn-success w-100">Save Payment</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Fees Table -->
+        <div class="col-md-7 d-flex flex-column" data-aos="fade-up" data-aos-delay="100">
+            <div class="card shadow-sm flex-grow-1 overflow-hidden">
+                <div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="bi bi-exclamation-octagon"></i> Pending Fees Report</h6></div>
+                <div class="card-body p-0 overflow-auto">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr><th>Student Name</th><th>Payable</th><th>Balance</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in pending %}
+                            <tr class="table-danger">
+                                <td>{{ p.full_name }}</td>
+                                <td>₹ {{ "%.0f"|format(p.payable_fee) }}</td>
+                                <td class="fw-bold">₹ {{ "%.0f"|format(p.balance) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-success py-4">No pending fees! All cleared.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Payments & Concession -->
+    <div class="row g-2 mt-1">
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="bi bi-receipt"></i> Recent Payments</h6></div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Student</th><th>Receipt No</th><th>Amount</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in recent_payments %}
+                            <tr>
+                                <td>{{ p.full_name }}</td>
+                                <td class="fw-bold">{{ p.receipt_number }}</td>
+                                <td>₹ {{ "%.0f"|format(p.amount_paid) }}</td>
+                                <td>
+                                    <a href="/admin/receipts/{{ p.payment_id }}/pdf" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-download"></i> Receipt</a>
+                                    <button class="btn btn-sm btn-outline-danger refund-btn" data-id="{{ p.payment_id }}" data-amount="{{ p.amount_paid }}" data-name="{{ p.full_name }}"><i class="bi bi-arrow-return-left"></i> Refund</button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">No recent payments.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="bi bi-gift"></i> Request Concession/Scholarship</h6></div>
+                <div class="card-body p-2">
+                    <form id="concessionForm" class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label small text-muted mb-1">Select Student</label>
+                            <select class="form-select form-select-sm" id="concessionStudent" required>
+                                <option value="">Select Student</option>
+                                {% for s in students %}<option value="{{ s.student_id }}">{{ s.full_name }}</option>{% endfor %}
+                            </select>
+                            <input type="hidden" name="student_fee_id" id="concessionFeeId">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted mb-1">Amount</label>
+                            <input type="number" class="form-control form-control-sm" name="amount" required step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Reason</label>
+                            <input type="text" class="form-control form-control-sm" name="reason" placeholder="e.g., Merit" required>
+                        </div>
+                        <div class="col-12 mt-1"><button type="submit" class="btn btn-sm btn-outline-info w-100">Request</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function submitForm(formId, url) {
+    const form = document.getElementById(formId);
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const res = await fetch(url, { method: 'POST', body: formData });
+        const data = await res.json();
+        if(data.success) { alert(data.message); form.reset(); location.reload(); }
+        else { alert('Error: ' + data.message); }
+    });
+}
+submitForm('fsForm', '/admin/api/fees/structure/add');
+submitForm('assignForm', '/admin/api/fees/assign');
+submitForm('bulkAssignForm', '/admin/api/fees/bulk-assign');
+
+document.getElementById("payStudent").addEventListener("change", async function() {
+    const studentId = this.value;
+    if(!studentId) return;
+    const res = await fetch(`/admin/api/fees/student/${studentId}`);
+    const data = await res.json();
+    if(data) {
+        document.getElementById("studentFeeId").value = data.student_fee_id;
+        document.getElementById("payable").value = data.payable_fee;
+        document.getElementById("paid").value = data.paid;
+        document.getElementById("balance").value = (parseFloat(data.payable_fee) - parseFloat(data.paid)).toFixed(2);
+    } else {
+        alert("No fee assigned to this student yet.");
+        this.value = "";
+    }
+});
+
+document.getElementById("payForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/admin/api/fees/pay", { method: 'POST', body: formData });
+    const data = await res.json();
+    if(data.success) { alert(data.message); location.reload(); }
+    else { alert('Error: ' + data.message); }
+});
+
+document.getElementById("concessionStudent").addEventListener("change", async function() {
+    const studentId = this.value;
+    if(!studentId) return;
+    const res = await fetch(`/admin/api/fees/student/${studentId}`);
+    const data = await res.json();
+    if(data) document.getElementById("concessionFeeId").value = data.student_fee_id;
+});
+
+document.getElementById("concessionForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/admin/api/fees/request-concession", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) this.reset();
+});
+
+document.querySelectorAll(".refund-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+        const paymentId = this.dataset.id;
+        const maxAmount = this.dataset.amount;
+        const studentName = this.dataset.name;
+        const amount = prompt(`Enter refund amount for ${studentName} (Max: ₹${maxAmount}):`);
+        if(!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(maxAmount)) {
+            if(amount !== null) alert("Invalid amount.");
+            return;
+        }
+        const reason = prompt("Enter reason for refund:");
+        if(!reason) return;
+        const formData = new URLSearchParams();
+        formData.append("payment_id", paymentId);
+        formData.append("refund_amount", amount);
+        formData.append("reason", reason);
+        fetch("/admin/api/fees/refund", { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => { alert(data.message); if(data.success) window.location.reload(); })
+        .catch(() => alert("Network Error"));
+    });
+});
+</script>
+{% endblock %}

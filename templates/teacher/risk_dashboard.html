@@ -1,0 +1,53 @@
+<!-- templates/teacher/risk_dashboard.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Risk Dashboard{% endblock %}
+{% block page_title %}Student Risk Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="alert alert-info shadow-sm mb-4" data-aos="fade-down">
+        <b><i class="bi bi-info-circle"></i> Transparent Indicators:</b> This dashboard shows students with attendance below 75% or missing/pending marks. No arbitrary risk score is calculated.
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0 text-danger">Academic Risk Indicators</h5></div>
+        <div class="card-body" id="riskBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/risk-dashboard", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("riskBody");
+
+    if(data.students.length === 0) {
+        body.innerHTML = '<div class="alert alert-success text-center">No academic risks detected. All students are above thresholds.</div>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Student</th><th>Subject</th><th class="text-center">Attendance %</th><th class="text-center">Missing Marks</th><th>Indicators</th></tr></thead>
+        <tbody>`;
+
+    data.students.forEach(s => {
+        let indicators = [];
+        if(s.att_perc < 75) indicators.push('<span class="badge bg-danger">Low Attendance</span>');
+        if(s.missing_marks > 0) indicators.push('<span class="badge bg-warning text-dark">Missing Marks</span>');
+
+        html += `<tr>
+            <td><b>${s.full_name}</b><br><small class="text-muted">${s.enrollment_no}</small></td>
+            <td>${s.subject_name}</td>
+            <td class="text-center fw-bold ${s.att_perc < 75 ? 'text-danger' : 'text-success'}">${s.att_perc || 0}%</td>
+            <td class="text-center fw-bold ${s.missing_marks > 0 ? 'text-warning' : ''}">${s.missing_marks}</td>
+            <td>${indicators.join(' ')}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

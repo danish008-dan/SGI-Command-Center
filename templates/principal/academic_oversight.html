@@ -1,0 +1,142 @@
+<!-- templates/principal/academic_oversight.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}Academic Oversight{% endblock %}
+{% block page_title %}Academic Oversight{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="academicOversight">
+    <div id="loadingSpinner" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Academic Analytics...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadAcademicData() {
+    const token = getToken();
+    if (!token) { window.location.href = "/login"; return; }
+
+    try {
+        const res = await fetch("/principal/api/academic", { headers: { "Authorization": "Bearer " + token } });
+        if (!res.ok) throw new Error("Failed to fetch academic data");
+        const data = await res.json();
+
+        const s = data.stats;
+        const container = document.getElementById("academicOversight");
+
+        let deptRows = "";
+        if (data.departments.length === 0) {
+            deptRows = '<tr><td colspan="4" class="text-center text-muted">No data available</td></tr>';
+        } else {
+            data.departments.forEach(d => {
+                // Determine CGPA health color
+                let cgpaColor = "text-success";
+                if (d.avg_cgpa < 6.0) cgpaColor = "text-danger";
+                else if (d.avg_cgpa < 7.5) cgpaColor = "text-warning";
+
+                // Determine Attendance health color
+                let attColor = "text-success";
+                if (d.avg_attendance < 60.0) attColor = "text-danger";
+                else if (d.avg_attendance < 75.0) attColor = "text-warning";
+
+                deptRows += `
+                    <tr>
+                        <td><b>${d.department_name}</b></td>
+                        <td class="text-center">${d.student_count}</td>
+                        <td class="text-center fw-bold ${attColor}">${d.avg_attendance}%</td>
+                        <td class="text-center fw-bold ${cgpaColor}">${d.avg_cgpa}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        container.innerHTML = `
+            <!-- Top Academic KPI Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Overall Attendance</p>
+                                <h2 class="mb-0">${s.avg_attendance}%</h2>
+                            </div>
+                            <i class="bi bi-calendar-check-fill fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Average CGPA</p>
+                                <h2 class="mb-0">${s.avg_cgpa}</h2>
+                            </div>
+                            <i class="bi bi-mortarboard-fill fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Pending Results</p>
+                                <h2 class="mb-0">${s.pending_results}</h2>
+                            </div>
+                            <i class="bi bi-file-earmark-text-fill fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-1 opacity-75">Pending Marks Verif.</p>
+                                <h2 class="mb-0">${s.pending_marks}</h2>
+                            </div>
+                            <i class="bi bi-pencil-square fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department-wise Academic Health -->
+            <div class="row g-4">
+                <div class="col-12" data-aos="fade-up">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Department-wise Academic Health</h5>
+                            <i class="bi bi-bar-chart-line-fill text-info"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Department</th>
+                                            <th class="text-center">Students</th>
+                                            <th class="text-center">Avg Attendance</th>
+                                            <th class="text-center">Avg CGPA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${deptRows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch (error) {
+        document.getElementById("academicOversight").innerHTML = `<div class="alert alert-danger">Error loading academic oversight data: ${error.message}</div>`;
+    }
+}
+
+loadAcademicData();
+</script>
+{% endblock %}

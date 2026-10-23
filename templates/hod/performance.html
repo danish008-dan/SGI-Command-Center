@@ -1,0 +1,44 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Academic Performance{% endblock %}
+{% block page_title %}Low Performance Indicators{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Students Below 50% Average</h5></div>
+        <div class="card-body" id="perfBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/performance", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("perfBody");
+    
+    if(data.low_performers.length === 0) {
+        body.innerHTML = '<div class="alert alert-success text-center">No students below 50% average. Great performance!</div>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Enrollment</th><th>Student Name</th><th>Semester</th><th class="text-center">Avg Marks %</th></tr></thead>
+        <tbody>`;
+    
+    data.low_performers.forEach(p => {
+        html += `<tr>
+            <td>${p.enrollment_no}</td>
+            <td><b>${p.full_name}</b></td>
+            <td>${p.semester}</td>
+            <td class="text-center fw-bold text-danger">${p.avg_percentage}%</td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

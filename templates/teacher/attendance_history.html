@@ -1,0 +1,53 @@
+<!-- templates/teacher/attendance_history.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Attendance History{% endblock %}
+{% block page_title %}History & Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle"></i> Low Attendance Students (<75%)</h5></div>
+        <div class="card-body" id="lowAttBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Recent Attendance History</h5></div>
+        <div class="card-body" id="historyBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/attendance/history", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+
+    const lowBody = document.getElementById("lowAttBody");
+    if(data.low_attendance_students.length === 0) {
+        lowBody.innerHTML = '<div class="alert alert-success">No students below 75% attendance. Great job!</div>';
+    } else {
+        let html = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Student</th><th>Enrollment</th><th>Subject</th><th class="text-center">Attendance %</th></tr></thead><tbody>`;
+        data.low_attendance_students.forEach(s => {
+            html += `<tr><td><b>${s.full_name}</b></td><td>${s.enrollment_no}</td><td>${s.subject_name}</td><td class="text-center fw-bold text-danger">${s.percentage}%</td></tr>`;
+        });
+        lowBody.innerHTML = html + '</tbody></table></div>';
+    }
+
+    const histBody = document.getElementById("historyBody");
+    if(data.history.length === 0) {
+        histBody.innerHTML = '<p class="text-muted text-center">No attendance history found.</p>';
+    } else {
+        let html = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Date</th><th>Subject</th><th>Section</th><th class="text-center">Present</th><th class="text-center">Absent</th></tr></thead><tbody>`;
+        data.history.forEach(h => {
+            html += `<tr><td>${new Date(h.attendance_date).toLocaleDateString()}</td><td>${h.subject_name}</td><td>${h.section}</td><td class="text-center text-success fw-bold">${h.present}</td><td class="text-center text-danger fw-bold">${h.absent}</td></tr>`;
+        });
+        histBody.innerHTML = html + '</tbody></table></div>';
+    }
+}
+loadData();
+</script>
+{% endblock %}

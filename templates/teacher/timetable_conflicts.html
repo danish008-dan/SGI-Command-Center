@@ -1,0 +1,69 @@
+<!-- templates/teacher/timetable_conflicts.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Timetable Conflicts{% endblock %}
+{% block page_title %}Schedule Conflicts{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0 text-danger">Detected Timetable Conflicts</h5></div>
+        <div class="card-body" id="confBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    const body = document.getElementById("confBody");
+    try {
+        const res = await fetch("/teacher/api/timetable/conflicts", {
+            headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') }
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (!data.conflicts || data.conflicts.length === 0) {
+            body.innerHTML = '<div class="alert alert-success text-center"><i class="bi bi-check-circle-fill"></i> No timetable conflicts detected. Your schedule is clean!</div>';
+            return;
+        }
+
+        let html = `<div class="alert alert-warning"><b><i class="bi bi-exclamation-triangle-fill"></i> ${data.conflicts.length} Time Conflicts Detected:</b> You have overlapping teaching hours.</div>`;
+
+        html += `<div class="table-responsive"><table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Day</th><th>Time</th><th>Conflict Details</th></tr></thead>
+            <tbody>`;
+
+        data.conflicts.forEach(c => {
+            html += `<tr>
+                <td><b>${c.day_of_week}</b></td>
+                <td>${c.start_time} - ${c.end_time}</td>
+                <td class="text-danger small">
+                    <b>Clash 1:</b> ${c.sub1} (Sec ${c.sec1}) <br>
+                    <b>Clash 2:</b> ${c.sub2} (Sec ${c.sec2})
+                </td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+        body.innerHTML = html;
+    } catch(err) {
+        console.error("Error loading conflicts:", err);
+        body.innerHTML = '<div class="alert alert-danger">Failed to load conflict data. Please check console for details.</div>';
+    }
+}
+loadData();
+</script>
+{% endblock %}

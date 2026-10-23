@@ -1,0 +1,63 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}Concession Approvals{% endblock %}
+{% block page_title %}Fee Concession Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Concession Requests</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Student</th><th>Payable</th><th>Concession Amt</th><th>Reason</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in pending %}
+                        <tr>
+                            <td>{{ c.student_name }} ({{ c.enrollment_no }})</td>
+                            <td>₹ {{ "%.0f"|format(c.payable_fee) }}</td>
+                            <td class="fw-bold text-info">₹ {{ "%.0f"|format(c.amount) }}</td>
+                            <td>{{ c.reason }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success approve-btn" data-id="{{ c.request_id }}">Approve</button>
+                                <button class="btn btn-sm btn-danger reject-btn" data-id="{{ c.request_id }}">Reject</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No pending requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function handleAction(btn, action) {
+    const id = btn.dataset.id;
+    if(!confirm(`Are you sure you want to ${action} this concession?`)) return;
+    
+    const formData = new URLSearchParams();
+    formData.append("request_id", id);
+    formData.append("action", action);
+    
+    try {
+        const res = await fetch("/principal/api/concessions/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+}
+
+document.querySelectorAll(".approve-btn").forEach(btn => {
+    btn.addEventListener("click", function() { handleAction(this, "Approved"); });
+});
+document.querySelectorAll(".reject-btn").forEach(btn => {
+    btn.addEventListener("click", function() { handleAction(this, "Rejected"); });
+});
+</script>
+{% endblock %}

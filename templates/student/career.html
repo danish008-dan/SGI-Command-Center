@@ -1,0 +1,118 @@
+<!-- templates/student/career.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Career Counsellor{% endblock %}
+{% block page_title %}AI Career Roadmap{% endblock %}
+
+{% block content %}
+<!-- Add marked.js for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Generate Career Roadmap</h5></div>
+        <div class="card-body">
+            <form id="careerForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small">Current CGPA</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="cgpa" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Preferred Domain</label>
+                        <input type="text" class="form-control form-control-sm" name="domain" placeholder="e.g., Full Stack, Data Science" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Skills (Comma separated)</label>
+                        <input type="text" class="form-control form-control-sm" name="skills" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Interests</label>
+                        <input type="text" class="form-control form-control-sm" name="interests" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Dream Salary (LPA)</label>
+                        <input type="number" class="form-control form-control-sm" name="salary" required>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm w-100" id="genBtn">
+                            <i class="bi bi-stars"></i> Generate AI Roadmap
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Your Career Roadmap</h5>
+        </div>
+        <div class="card-body" id="reportBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading saved report...</p></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+        font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #111827;
+    }
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 1.2rem; margin-bottom: 0.5rem;
+    }
+    .markdown-content p { margin-bottom: 0.5rem; }
+    .markdown-content strong { color: #0d6efd; }
+</style>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadSavedReport() {
+    const res = await fetch("/student/api/career/saved", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("reportBody");
+
+    if(data.saved_report) {
+        // Convert Markdown to HTML
+        const htmlContent = marked.parse(data.saved_report);
+        body.innerHTML = `<div class="markdown-content">${htmlContent}</div>`;
+    } else {
+        body.innerHTML = '<p class="text-muted text-center py-4">No saved roadmap found. Generate one above.</p>';
+    }
+}
+
+document.getElementById("careerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("genBtn");
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+    btn.disabled = true;
+
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/student/api/career/generate", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken(), "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData
+    });
+
+    const data = await res.json();
+    btn.innerHTML = '<i class="bi bi-stars"></i> Generate AI Roadmap';
+    btn.disabled = false;
+
+    if(data.success) {
+        loadSavedReport(); // Reload the saved report
+    } else {
+        alert(data.message || "Failed to generate report.");
+    }
+});
+
+loadSavedReport();
+</script>
+{% endblock %}

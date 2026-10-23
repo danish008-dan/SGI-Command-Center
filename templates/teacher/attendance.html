@@ -1,0 +1,172 @@
+<!-- templates/teacher/attendance.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Mark Attendance</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label small">Subject</label>
+                    <select id="subjectSelect" class="form-select form-select-sm">
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Section</label>
+                    <select id="sectionSelect" class="form-select form-select-sm" disabled>
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Date</label>
+                    {% if demo_mode %}
+                    {# Q11 demo mode: no date restriction. ATTENDANCE_DEMO_MODE=1 is set. #}
+                    <input type="date" id="dateInput" class="form-control form-control-sm">
+                    {% else %}
+                    {# Production mode: block future dates. Past dates unlimited (teachers can mark retroactively). #}
+                    <input type="date" id="dateInput" class="form-control form-control-sm" max="{{ today_date }}">
+                    {% endif %}
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary btn-sm w-100" onclick="loadStudents()">
+                        <i class="bi bi-search"></i> Load Students
+                    </button>
+                </div>
+            </div>
+
+            <div id="studentsContainer" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Enrollment</th>
+                                <th>Student Name</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsBody"></tbody>
+                    </table>
+                </div>
+                <div class="text-end mt-3">
+                    <button class="btn btn-success" onclick="saveAttendance()">
+                        <i class="bi bi-save"></i> Save Attendance
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+let currentStudents = [];
+
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => {
+        select.innerHTML += `<option value="${s.subject_id}">${s.subject_name} (Sem ${s.semester})</option>`;
+    });
+}
+
+document.getElementById("subjectSelect").addEventListener("change", async function() {
+    const sectionSelect = document.getElementById("sectionSelect");
+    sectionSelect.innerHTML = '<option value="">Select...</option>';
+    if(this.value) {
+        sectionSelect.disabled = true;
+        const res = await fetch(`/teacher/api/sections?subject_id=${this.value}`, { headers: { "Authorization": "Bearer " + getToken() } });
+        const data = await res.json();
+        if(data.sections && data.sections.length > 0) {
+            data.sections.forEach(sec => sectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`);
+            sectionSelect.disabled = false;
+        } else {
+            // Q6/Q7: clear empty-state, no fake placeholder, dropdown stays disabled.
+            sectionSelect.innerHTML = '<option value="">No sections available for this subject</option>';
+        }
+    } else {
+        sectionSelect.disabled = true;
+    }
+});
+
+async function loadStudents() {
+    const subjectId = document.getElementById("subjectSelect").value;
+    const section = document.getElementById("sectionSelect").value;
+    const date = document.getElementById("dateInput").value;
+
+    if(!subjectId || !section || !date) {
+        alert("Please select Subject, Section, and Date.");
+        return;
+    }
+
+    const res = await fetch(`/teacher/api/students?subject_id=${subjectId}&section=${section}`, { headers: { "Authorization": "Bearer " + getToken() } });
+    if(!res.ok) { alert("Unauthorized or failed to load."); return; }
+    const data = await res.json();
+
+    const attRes = await fetch(`/teacher/api/attendance/status?subject_id=${subjectId}&section=${section}&date=${date}`, { headers: { "Authorization": "Bearer " + getToken() } });
+    const attData = await attRes.json();
+
+    currentStudents = data.students;
+    const body = document.getElementById("studentsBody");
+    body.innerHTML = "";
+
+    if(currentStudents.length === 0) {
+        body.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No students found.</td></tr>';
+        return;
+    }
+
+    currentStudents.forEach(s => {
+        const existingStatus = attData.attendance[s.student_id] || 'Present';
+        body.innerHTML += `
+            <tr>
+                <td>${s.enrollment_no}</td>
+                <td>${s.student_name}</td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="att_${s.student_id}" id="pres_${s.student_id}" value="Present" ${existingStatus === 'Present' ? 'checked' : ''}>
+                        <label class="btn btn-outline-success" for="pres_${s.student_id}">Present</label>
+
+                        <input type="radio" class="btn-check" name="att_${s.student_id}" id="abs_${s.student_id}" value="Absent" ${existingStatus === 'Absent' ? 'checked' : ''}>
+                        <label class="btn btn-outline-danger" for="abs_${s.student_id}">Absent</label>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    document.getElementById("studentsContainer").style.display = "block";
+}
+
+async function saveAttendance() {
+    const subjectId = document.getElementById("subjectSelect").value;
+    const section = document.getElementById("sectionSelect").value;
+    const date = document.getElementById("dateInput").value;
+
+    const attendance = currentStudents.map(s => {
+        const status = document.querySelector(`input[name="att_${s.student_id}"]:checked`).value;
+        return { student_id: s.student_id, status: status };
+    });
+
+    const res = await fetch("/teacher/api/save-attendance", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ subject_id: parseInt(subjectId), section: section, date: date, attendance: attendance })
+    });
+    const data = await res.json();
+    alert(data.message);
+}
+loadSubjects();
+</script>
+{% endblock %}

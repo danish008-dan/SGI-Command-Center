@@ -1,0 +1,119 @@
+<!-- templates/student/complaints.html -->
+{% extends "student/student_layout.html" %}
+
+{% block title %}My Complaints{% endblock %}
+{% block page_title %}Grievance & Complaints{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Submit Complaint Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="bi bi-plus-circle"></i> Register New Complaint</h5></div>
+        <div class="card-body">
+            <form id="compForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" name="category" required>
+                            <option value="Academic">Academic</option>
+                            <option value="Infrastructure">Infrastructure</option>
+                            <option value="IT">IT Support</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Harassment">Harassment (Confidential)</option>
+                            <option value="Ragging">Ragging (Confidential)</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Complaint Details</label>
+                        <textarea class="form-control" name="complaint" rows="2" required></textarea>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Submit Complaint</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- My Complaints Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">My Registered Complaints</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Ref ID</th><th>Category</th><th>Status</th><th>Date</th><th>Track</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in complaints %}
+                        <tr>
+                            <td class="fw-bold">CMP{{ "%06d"|format(c.complaint_id) }}</td>
+                            <td><span class="badge bg-primary">{{ c.category }}</span></td>
+                            <td><span class="badge bg-{% if c.status == 'Resolved' %}success{% elif c.status == 'Pending' %}warning{% elif c.status == 'Escalated' %}danger{% else %}info{% endif %}">{{ c.status }}</span></td>
+                            <td>{{ c.created_at }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary track-btn" data-id="{{ c.complaint_id }}">Track</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No complaints registered.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Track Details Modal -->
+<div class="modal fade" id="trackModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complaint Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="trackBody">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+document.getElementById("compForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/student/api/complaints/add", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + getToken() },
+            body: formData
+        });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+
+const trackModal = new bootstrap.Modal(document.getElementById('trackModal'));
+
+document.querySelectorAll('.track-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        document.getElementById('trackBody').innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+        trackModal.show();
+
+        document.getElementById('trackBody').innerHTML = `
+            <p>Tracking details for Complaint ID: <b>CMP${id.padStart(6, '0')}</b></p>
+            <p class="text-muted">Full case history and communication will be displayed here.</p>
+        `;
+    });
+});
+</script>
+{% endblock %}

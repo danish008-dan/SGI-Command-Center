@@ -1,0 +1,256 @@
+<!-- templates/teacher/ai_tools.html -->
+{% extends "teacher/teacher_layout.html" %}
+
+{% block title %}AI Teaching Tools{% endblock %}
+{% block page_title %}AI Teaching Assistant{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills mb-4 d-print-none" data-aos="fade-up">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="pill" href="#tab-qp">📝 Question Paper Generator</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-assign">💼 Assignment Generator</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Question Paper Tab -->
+        <div class="tab-pane fade show active" id="tab-qp">
+            <div class="row g-4">
+                <!-- Left Form (Hidden on Print) -->
+                <div class="col-md-4 d-print-none" data-aos="fade-up">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3"><h6 class="mb-0">Generate Question Paper</h6></div>
+                        <div class="card-body">
+                            <form id="qpForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Subject Name</label>
+                                    <input type="text" class="form-control" name="subject" placeholder="e.g. Machine Learning" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Unit / Topic</label>
+                                    <input type="text" class="form-control" name="unit" placeholder="e.g. Neural Networks" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Difficulty</label>
+                                    <select class="form-select" name="difficulty">
+                                        <option>Easy</option>
+                                        <option selected>Medium</option>
+                                        <option>Hard</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Total Marks</label>
+                                    <input type="number" class="form-control" name="marks" value="30" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="qpBtn">Generate Paper</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Result (Visible on Print) -->
+                <div class="col-md-8" data-aos="fade-up" data-aos-delay="100">
+                    <div id="qpLoading" class="text-center py-5 d-none d-print-none">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                        <h5 class="mt-3 text-primary-custom">AI is preparing the question paper...</h5>
+                    </div>
+                    <div id="qpResult" class="d-none"></div>
+                    <div id="qpPlaceholder" class="card shadow-sm h-100 d-flex align-items-center justify-content-center d-print-none" style="min-height: 400px;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Your generated question paper will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Tab -->
+        <div class="tab-pane fade" id="tab-assign">
+            <div class="row g-4">
+                <div class="col-md-4 d-print-none" data-aos="fade-up">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3"><h6 class="mb-0">Generate Assignment</h6></div>
+                        <div class="card-body">
+                            <form id="assignForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Subject Name</label>
+                                    <input type="text" class="form-control" name="subject" placeholder="e.g. Python Programming" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Topic</label>
+                                    <input type="text" class="form-control" name="topic" placeholder="e.g. Data Structures" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="assignBtn">Generate Assignment</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8" data-aos="fade-up" data-aos-delay="100">
+                    <div id="assignLoading" class="text-center py-5 d-none d-print-none">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                        <h5 class="mt-3 text-primary-custom">AI is designing the assignment...</h5>
+                    </div>
+                    <div id="assignResult" class="d-none"></div>
+                    <div id="assignPlaceholder" class="card shadow-sm h-100 d-flex align-items-center justify-content-center d-print-none" style="min-height: 400px;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-journal-text" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Your generated assignment will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+const safeArray = (arr) => Array.isArray(arr) ? arr : (arr ? [arr] : []);
+
+// 1. Question Paper Generator
+document.getElementById("qpForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("qpBtn");
+    const formData = new FormData(this);
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+    btn.disabled = true;
+    document.getElementById("qpLoading").classList.remove("d-none");
+    document.getElementById("qpResult").classList.add("d-none");
+    document.getElementById("qpPlaceholder").classList.add("d-none");
+
+    try {
+        const res = await fetch("/teacher/api/ai/question-paper", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + getToken() },
+            body: formData
+        });
+        const data = await res.json();
+        document.getElementById("qpLoading").classList.add("d-none");
+
+        if (data.success) {
+            renderQP(data.report, document.querySelector('input[name="subject"]').value);
+        } else {
+            alert(data.message);
+            document.getElementById("qpPlaceholder").classList.remove("d-none");
+        }
+    } catch(err) {
+        alert("Network error");
+        document.getElementById("qpPlaceholder").classList.remove("d-none");
+    } finally {
+        btn.innerHTML = 'Generate Paper';
+        btn.disabled = false;
+    }
+});
+
+function renderQP(r, subjectName) {
+    const container = document.getElementById("qpResult");
+    let mcqsHtml = "";
+    safeArray(r.mcqs).forEach((m, i) => {
+        mcqsHtml += `<p><b>${i+1}. ${m.question}</b> [${m.marks} Marks]</p><ul>`;
+        m.options.forEach(opt => { mcqsHtml += `<li>${opt}</li>`; });
+        mcqsHtml += `</ul><p class="text-success small">Ans: ${m.answer}</p>`;
+    });
+
+    let theoryHtml = "";
+    safeArray(r.theory).forEach((t, i) => {
+        theoryHtml += `<p>${i+1}. ${t.question} [${t.marks} Marks]</p>`;
+    });
+
+    let vivaHtml = "";
+    safeArray(r.viva).forEach((v, i) => {
+        vivaHtml += `<p>${i+1}. ${v.question} [${v.marks} Marks]</p>`;
+    });
+
+    container.innerHTML = `
+        <div id="printableQP" class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between d-print-none">
+                <h5 class="mb-0">Question Paper</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            </div>
+            <div class="card-body p-4">
+                <h4 class="text-center mb-4">${subjectName} - Question Paper</h4>
+                <h6 class="border-bottom pb-2 mb-3">Section A: Multiple Choice Questions</h6>
+                ${mcqsHtml}
+                <h6 class="border-bottom pb-2 mb-3 mt-4">Section B: Theory Questions</h6>
+                ${theoryHtml}
+                <h6 class="border-bottom pb-2 mb-3 mt-4">Section C: Viva Questions</h6>
+                ${vivaHtml}
+            </div>
+        </div>
+    `;
+    container.classList.remove("d-none");
+}
+
+// 2. Assignment Generator
+document.getElementById("assignForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("assignBtn");
+    const formData = new FormData(this);
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+    btn.disabled = true;
+    document.getElementById("assignLoading").classList.remove("d-none");
+    document.getElementById("assignResult").classList.add("d-none");
+    document.getElementById("assignPlaceholder").classList.add("d-none");
+
+    try {
+        const res = await fetch("/teacher/api/ai/assignment", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + getToken() },
+            body: formData
+        });
+        const data = await res.json();
+        document.getElementById("assignLoading").classList.add("d-none");
+
+        if (data.success) {
+            renderAssign(data.report, document.querySelector('input[name="subject"]').value);
+        } else {
+            alert(data.message);
+            document.getElementById("assignPlaceholder").classList.remove("d-none");
+        }
+    } catch(err) {
+        alert("Network error");
+        document.getElementById("assignPlaceholder").classList.remove("d-none");
+    } finally {
+        btn.innerHTML = 'Generate Assignment';
+        btn.disabled = false;
+    }
+});
+
+function renderAssign(r, subjectName) {
+    const container = document.getElementById("assignResult");
+    let assignHtml = safeArray(r.assignments).map((a, i) => `<p>${i+1}. ${a}</p>`).join("");
+    let pracHtml = safeArray(r.practical).map((p, i) => `<p>${i+1}. ${p}</p>`).join("");
+    let vivaHtml = safeArray(r.viva).map((v, i) => `<p>${i+1}. ${v}</p>`).join("");
+
+    container.innerHTML = `
+        <div id="printableAssign" class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between d-print-none">
+                <h5 class="mb-0">Assignment Sheet</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            </div>
+            <div class="card-body p-4">
+                <h4 class="text-center mb-4">${subjectName} Assignment</h4>
+                <h6 class="border-bottom pb-2 mb-3">Assignment Questions</h6>
+                ${assignHtml}
+                <h6 class="border-bottom pb-2 mb-3 mt-4">Practical Problems</h6>
+                ${pracHtml}
+                <h6 class="border-bottom pb-2 mb-3 mt-4">Viva Questions</h6>
+                ${vivaHtml}
+            </div>
+        </div>
+    `;
+    container.classList.remove("d-none");
+}
+</script>
+{% endblock %}

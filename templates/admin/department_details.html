@@ -1,0 +1,191 @@
+<!-- templates/admin/department_details.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}{{ details.department_name }}{% endblock %}
+{% block page_title %}Department: {{ details.department_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/departments" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Departments
+            </a>
+            <div>
+                <h4 class="mb-0">{{ details.department_name }} ({{ details.department_code }})</h4>
+                <small class="text-muted">Status:
+                    <span class="badge {% if details.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ details.status }}</span>
+                </small>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#hodModal">
+            <i class="bi bi-person-badge me-1"></i> Manage HOD
+        </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Students</p>
+                <h3 class="cmd-stat-value">{{ details.student_count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Faculty</p>
+                <h3 class="cmd-stat-value">{{ details.faculty_count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Subjects</p>
+                <h3 class="cmd-stat-value">{{ details.subject_count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Current HOD</p>
+                <h6 class="cmd-stat-value text-primary">{{ details.hod_name or 'Not Assigned' }}</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#people">People</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">HOD History</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- People Tab -->
+        <div class="tab-pane fade show active" id="people">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white"><h6 class="mb-0">Faculty</h6></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light"><tr><th>Name</th><th>Designation</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    {% for f in people.faculty %}
+                                    <tr>
+                                        <td>{{ f.full_name }}</td>
+                                        <td>{{ f.designation }}</td>
+                                        <td><span class="badge {% if f.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ f.status }}</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center text-muted">No faculty found</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white"><h6 class="mb-0">Students</h6></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light"><tr><th>Name</th><th>Sem</th><th>Section</th></tr></thead>
+                                <tbody>
+                                    {% for s in people.students %}
+                                    <tr>
+                                        <td>{{ s.full_name }}</td>
+                                        <td>{{ s.semester }}</td>
+                                        <td>{{ s.section or '-' }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center text-muted">No students found</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOD History Tab -->
+        <div class="tab-pane fade" id="history">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Assignment History</h6></div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th>HOD Name</th><th>Effective From</th><th>Effective To</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for h in history %}
+                            <tr>
+                                <td>{{ h.hod_name }}</td>
+                                <td>{{ h.effective_from }}</td>
+                                <td>{{ h.effective_to or 'Present' }}</td>
+                                <td><span class="badge {% if h.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">{{ h.status }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">No history found</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign HOD Modal -->
+<div class="modal fade" id="hodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="assignHODForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign New HOD</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="dept_id" value="{{ details.department_id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Select User (Teacher/HOD)</label>
+                        <select class="form-select" name="user_id" required>
+                            <option value="">-- Select --</option>
+                            {% for c in candidates %}
+                            <option value="{{ c.user_id }}">{{ c.full_name }} ({{ c.role }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Effective From</label>
+                        <input type="date" class="form-control" name="effective_from" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Assign HOD</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("assignHODForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const deptId = formData.get("dept_id");
+
+    try {
+        const res = await fetch(`/admin/departments/${deptId}/assign-hod`, { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (err) {
+        alert("Network Error");
+    }
+});
+</script>
+{% endblock %}

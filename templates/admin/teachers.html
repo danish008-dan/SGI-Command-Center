@@ -1,0 +1,244 @@
+<!-- templates/admin/teachers.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Teacher Management{% endblock %}
+{% block page_title %}Teacher Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Faculty</p>
+                <h3 class="cmd-stat-value">{{ stats.total }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Active Faculty</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.active }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Inactive / Other</p>
+                <h3 class="cmd-stat-value text-danger">{{ stats.inactive }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table & Filters -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Faculty Directory</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                <i class="bi bi-person-plus me-1"></i> Add Teacher
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- Search & Filters -->
+            <form method="get" action="/admin/teachers" class="row g-2 mb-3 align-items-end">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="search" placeholder="Search name or email..." value="{{ filters.search or '' }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="department_id" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for d in departments %}
+                        <option value="{{ d.department_id }}" {% if filters.department_id == d.department_id %}selected{% endif %}>{{ d.department_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+                    <a href="/admin/teachers" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Experience</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in teachers %}
+                        <tr>
+                            <td class="fw-bold">{{ t.full_name }}</td>
+                            <td>{{ t.email }}</td>
+                            <td>{{ t.department_name or '-' }}</td>
+                            <td>{{ t.designation }}</td>
+                            <td>{{ t.experience }} yrs</td>
+                            <td><span class="badge {% if t.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ t.status }}</span></td>
+                            <td>
+                                <a href="/admin/teachers/{{ t.teacher_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <button class="btn btn-sm btn-outline-warning edit-teacher-btn"
+                                        data-id="{{ t.teacher_id }}"
+                                        data-name="{{ t.full_name }}"
+                                        data-email="{{ t.email }}"
+                                        data-mobile="{{ t.mobile or '' }}"
+                                        data-dept="{{ t.department_id if t.department_name else '' }}"
+                                        data-desig="{{ t.designation }}"
+                                        data-qual="{{ t.qualification or '' }}"
+                                        data-exp="{{ t.experience }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No teachers found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Teacher Modal -->
+<div class="modal fade" id="addTeacherModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Teacher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="teacherForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="name" required></div>
+                        <div class="col-md-6"><label class="form-label">Email *</label><input type="email" class="form-control" name="email" required></div>
+                        <div class="col-md-6"><label class="form-label">Mobile</label><input type="text" class="form-control" name="mobile"></div>
+                        <div class="col-md-6"><label class="form-label">Department *</label>
+                            <select class="form-select" name="department_id" required>
+                                <option value="">Select Department</option>
+                                {% for dept in departments %}<option value="{{ dept.department_id }}">{{ dept.department_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Designation *</label>
+                            <select class="form-select" name="designation" required>
+                                <option value="Assistant Professor">Assistant Professor</option>
+                                <option value="Associate Professor">Associate Professor</option>
+                                <option value="Professor">Professor</option>
+                                <option value="Lecturer">Lecturer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><label class="form-label">Qualification</label><input type="text" class="form-control" name="qualification"></div>
+                        <div class="col-md-3"><label class="form-label">Experience (Years)</label><input type="number" min="0" class="form-control" name="experience" value="0"></div>
+                        <div class="col-md-6"><label class="form-label">Login Password *</label><input type="password" class="form-control" name="password" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="addTeacherBtn"><i class="bi bi-save me-1"></i> Save Teacher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div class="modal fade" id="editTeacherModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Teacher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editTeacherForm">
+                <div class="modal-body">
+                    <input type="hidden" name="teacher_id" id="edit_teacher_id">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="name" id="edit_name" required></div>
+                        <div class="col-md-6"><label class="form-label">Email *</label><input type="email" class="form-control" name="email" id="edit_email" required></div>
+                        <div class="col-md-6"><label class="form-label">Mobile</label><input type="text" class="form-control" name="mobile" id="edit_mobile"></div>
+                        <div class="col-md-6"><label class="form-label">Department *</label>
+                            <select class="form-select" name="department_id" id="edit_department_id" required>
+                                <option value="">Select Department</option>
+                                {% for dept in departments %}<option value="{{ dept.department_id }}">{{ dept.department_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Designation *</label>
+                            <select class="form-select" name="designation" id="edit_designation" required>
+                                <option value="Assistant Professor">Assistant Professor</option>
+                                <option value="Associate Professor">Associate Professor</option>
+                                <option value="Professor">Professor</option>
+                                <option value="Lecturer">Lecturer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><label class="form-label">Qualification</label><input type="text" class="form-control" name="qualification" id="edit_qualification"></div>
+                        <div class="col-md-3"><label class="form-label">Experience (Years)</label><input type="number" min="0" class="form-control" name="experience" id="edit_experience"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="updateTeacherBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+// Add Form
+document.getElementById("teacherForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("addTeacherBtn");
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+    try {
+        const response = await fetch("/admin/teachers", { method: "POST", body: formData });
+        const data = await response.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Teacher'; btn.disabled = false; }
+    } catch (error) { alert("Network error."); btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Teacher'; btn.disabled = false; }
+});
+
+// Edit Modal Logic
+const editModal = new bootstrap.Modal(document.getElementById('editTeacherModal'));
+document.querySelectorAll('.edit-teacher-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('edit_teacher_id').value = this.dataset.id;
+        document.getElementById('edit_name').value = this.dataset.name;
+        document.getElementById('edit_email').value = this.dataset.email;
+        document.getElementById('edit_mobile').value = this.dataset.mobile;
+        document.getElementById('edit_department_id').value = this.dataset.dept;
+        document.getElementById('edit_designation').value = this.dataset.desig;
+        document.getElementById('edit_qualification').value = this.dataset.qual;
+        document.getElementById('edit_experience').value = this.dataset.exp;
+        editModal.show();
+    });
+});
+
+// Update Form
+document.getElementById("editTeacherForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("updateTeacherBtn");
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+    try {
+        const response = await fetch("/admin/teachers/update", { method: "POST", body: formData });
+        const data = await response.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); btn.innerHTML = 'Save Changes'; btn.disabled = false; }
+    } catch (error) { alert("Network error."); btn.innerHTML = 'Save Changes'; btn.disabled = false; }
+});
+</script>
+{% endblock %}

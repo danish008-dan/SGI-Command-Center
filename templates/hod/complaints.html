@@ -1,0 +1,45 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Department Complaints{% endblock %}
+{% block page_title %}Student Grievances (Normal){% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Department Complaints</h5></div>
+        <div class="card-body" id="compBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/complaints", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("compBody");
+    
+    if(data.complaints.length === 0) {
+        body.innerHTML = '<p class="text-center text-muted py-4">No normal complaints found.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Student</th><th>Category</th><th>Complaint</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>`;
+    
+    data.complaints.forEach(c => {
+        html += `<tr>
+            <td><b>${c.student_name}</b></td>
+            <td>${c.category}</td>
+            <td>${c.complaint}</td>
+            <td><span class="badge bg-info">${c.status}</span></td>
+            <td>${new Date(c.created_at).toLocaleDateString()}</td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

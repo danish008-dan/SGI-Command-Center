@@ -1,0 +1,176 @@
+<!-- templates/admin/students.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Student Management{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Students</p>
+                <h3 class="cmd-stat-value">{{ stats.total }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Active Students</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.active }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Inactive / Other</p>
+                <h3 class="cmd-stat-value text-danger">{{ stats.inactive }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table & Filters -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Student Directory</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <i class="bi bi-person-plus me-1"></i> Add Student
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- Search & Filters -->
+            <form method="get" action="/admin/students" class="row g-2 mb-3 align-items-end">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" placeholder="Search name, enrollment, email..." value="{{ filters.search or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="department_id" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for d in departments %}
+                        <option value="{{ d.department_id }}" {% if filters.department_id == d.department_id %}selected{% endif %}>{{ d.department_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="semester" class="form-select">
+                        <option value="">All Sem</option>
+                        {% for i in range(1, 9) %}
+                        <option value="{{ i }}" {% if filters.semester == i %}selected{% endif %}>Sem {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+                    <a href="/admin/students" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Enrollment</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Sem</th>
+                            <th>Section</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td class="fw-bold">{{ s.enrollment_no }}</td>
+                            <td>{{ s.full_name }}</td>
+                            <td>{{ s.email }}</td>
+                            <td>{{ s.department_name or '-' }}</td>
+                            <td>{{ s.semester }}</td>
+                            <td>{{ s.section or '-' }}</td>
+                            <td>
+                                <span class="badge {% if s.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ s.status }}</span>
+                            </td>
+                            <td>
+                                <a href="/admin/students/{{ s.student_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="8" class="text-center text-muted py-4">No students found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="studentForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="name" required></div>
+                        <div class="col-md-6"><label class="form-label">Email *</label><input type="email" class="form-control" name="email" required></div>
+                        <div class="col-md-6"><label class="form-label">Mobile</label><input type="text" class="form-control" name="mobile"></div>
+                        <div class="col-md-6"><label class="form-label">Enrollment No. *</label><input type="text" class="form-control" name="enrollment" required></div>
+                        <div class="col-md-6"><label class="form-label">Department *</label>
+                            <select class="form-select" name="department_id" required>
+                                <option value="">Select Department</option>
+                                {% for dept in departments %}<option value="{{ dept.department_id }}">{{ dept.department_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3"><label class="form-label">Semester *</label>
+                            <select class="form-select" name="semester" required><option value="">Select</option>{% for i in range(1, 9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select>
+                        </div>
+                        <div class="col-md-3"><label class="form-label">Section</label><input type="text" class="form-control" name="section"></div>
+                        <div class="col-md-6"><label class="form-label">Login Password *</label><input type="password" class="form-control" name="password" required></div>
+                        <div class="col-md-6"><label class="form-label">CGPA</label><input type="number" step="0.01" min="0" max="10" class="form-control" name="cgpa"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="addStudentBtn"><i class="bi bi-save me-1"></i> Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("studentForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("addStudentBtn");
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+    try {
+        const response = await fetch("/admin/students", { method: "POST", body: formData });
+        const data = await response.json();
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message);
+            btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Student';
+            btn.disabled = false;
+        }
+    } catch (error) {
+        alert("Network error.");
+        btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Student';
+        btn.disabled = false;
+    }
+});
+</script>
+{% endblock %}

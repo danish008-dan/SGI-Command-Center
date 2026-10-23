@@ -1,0 +1,57 @@
+<!-- templates/teacher/timetable.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}My Timetable{% endblock %}
+{% block page_title %}Weekly Teaching Schedule{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">My Timetable</h5>
+        </div>
+        <div class="card-body">
+            {% if timetable %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">Time</th>
+                            {% for day in days %}
+                                <th>{{ day[:3] }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for time_slot, day_data in timetable.items() %}
+                        <tr>
+                            <td class="fw-bold bg-light">{{ time_slot }}</td>
+                            {% for day in days %}
+                                {% set entry = day_data[day] %}
+                                <td>
+                                    {% if entry %}
+                                        <small class="fw-bold text-primary d-block">{{ entry.subject_name }}</small>
+                                        <small class="text-muted d-block">{{ entry.semester }}-{{ entry.section }}</small>
+                                        <small class="text-muted d-block"><i class="bi bi-geo-alt"></i> {{ entry.room_number }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted py-4">No timetable published yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+<!-- templates/student/materials.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Learning Materials{% endblock %}
+{% block page_title %}Department Materials{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/learning-center" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Learning Center
+    </a>
+</div>
+
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Approved Resources</h5></div>
+        <div class="card-body" id="matBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/student/api/materials", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("matBody");
+
+    if(data.materials.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-4">No approved materials available for your department yet.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Title</th><th>Status</th><th>Published Date</th></tr></thead>
+        <tbody>`;
+
+    data.materials.forEach(m => {
+        html += `<tr>
+            <td><b>${m.title}</b></td>
+            <td><span class="badge bg-success">${m.status}</span></td>
+            <td>${m.created_at}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

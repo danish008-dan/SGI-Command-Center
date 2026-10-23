@@ -1,0 +1,832 @@
+<!-- templates/student/resume_builder.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Resume Builder{% endblock %}
+{% block page_title %}Resume Builder{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3 d-flex justify-content-between">
+    <a href="/student/placement" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Placement
+    </a>
+    <div>
+        <button class="btn btn-success btn-sm shadow-sm" id="saveBtn"><i class="bi bi-save"></i> Save Draft</button>
+        <button class="btn btn-danger btn-sm shadow-sm" id="exportBtn"><i class="bi bi-file-pdf"></i> Export PDF</button>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Editor Form -->
+        <div class="col-lg-5" data-aos="fade-right">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3"><h5 class="mb-0">Resume Details</h5></div>
+                <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
+                    <form id="builderForm" autocomplete="off">
+                        <!-- Personal Info -->
+                        <h6 class="mb-2">Personal Info</h6>
+                        <input type="text" class="form-control form-control-sm mb-2" id="full_name" placeholder="Full Name" maxlength="120" required>
+                        <input type="email" class="form-control form-control-sm mb-2" id="email" placeholder="Email" maxlength="254" required>
+                        <input type="text" class="form-control form-control-sm mb-2" id="phone" placeholder="Phone (e.g. +91 9876543210)" maxlength="20">
+                        <input type="text" class="form-control form-control-sm mb-2" id="location" placeholder="Location" maxlength="120">
+                        <input type="url" class="form-control form-control-sm mb-2" id="linkedin" placeholder="LinkedIn URL (https://...)" maxlength="500">
+                        <input type="url" class="form-control form-control-sm mb-2" id="github" placeholder="GitHub URL (https://...)" maxlength="500">
+                        <input type="url" class="form-control form-control-sm mb-3" id="portfolio" placeholder="Portfolio URL (https://...)" maxlength="500">
+
+                        <!-- Summary -->
+                        <h6 class="mb-2">Summary</h6>
+                        <textarea class="form-control form-control-sm mb-3" id="summary" rows="3" placeholder="Professional Summary..." maxlength="1000"></textarea>
+
+                        <!-- Work Experience -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                            <h6 class="mb-0">Work Experience</h6>
+                            <button type="button" class="btn btn-sm btn-link p-0" id="addExperienceBtn">+ Add</button>
+                        </div>
+                        <div id="experienceContainer"></div>
+
+                        <!-- Projects -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                            <h6 class="mb-0">Projects</h6>
+                            <button type="button" class="btn btn-sm btn-link p-0" id="addProjectBtn">+ Add</button>
+                        </div>
+                        <div id="projectContainer"></div>
+
+                        <!-- Technical Skills -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                            <h6 class="mb-0">Technical Skills</h6>
+                            <button type="button" class="btn btn-sm btn-link p-0" id="addSkillCategoryBtn">+ Add Category</button>
+                        </div>
+                        <div id="skillsContainer" class="mb-3"></div>
+
+                        <!-- Certifications -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                            <h6 class="mb-0">Certifications</h6>
+                            <button type="button" class="btn btn-sm btn-link p-0" id="addCertificationBtn">+ Add</button>
+                        </div>
+                        <div id="certificationContainer"></div>
+
+                        <!-- Education -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                            <h6 class="mb-0">Education</h6>
+                            <button type="button" class="btn btn-sm btn-link p-0" id="addEducationBtn">+ Add</button>
+                        </div>
+                        <div id="educationContainer"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="col-lg-7" data-aos="fade-left">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Live Preview</h5>
+                    <span id="saveStatus" class="badge bg-secondary">Idle</span>
+                </div>
+                <div class="card-body bg-light" id="previewArea" style="min-height: 80vh; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                    <div class="text-center text-muted py-5">Start typing to see live preview...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+// === Constants ===
+const MAX_EXPERIENCE_ENTRIES = 30;
+const MAX_PROJECT_ENTRIES = 30;
+const MAX_CERTIFICATION_ENTRIES = 30;
+const MAX_EDUCATION_ENTRIES = 20;
+const MAX_SKILL_CATEGORIES = 30;
+const MAX_BULLETS_PER_ENTRY = 50;
+const MAX_SKILLS_PER_CATEGORY = 30;
+
+const DEFAULT_SKILL_CATEGORIES = [
+    "Languages", "AIML", "AI Frameworks", "AI APIs", "Computer Vision",
+    "Libraries", "Frameworks", "Databases", "Analytics", "Tools"
+];
+
+// === Safe DOM helper (blueprint §6.2.1) ===
+// Uses createElement + textContent (NEVER innerHTML) for user values
+// to prevent XSS via <script> or other HTML injection.
+function el(tag, opts, ...children) {
+    const e = document.createElement(tag);
+    if (opts) {
+        for (const [k, v] of Object.entries(opts)) {
+            if (v === null || v === undefined) continue;
+            if (k === 'class') e.className = v;
+            else if (k === 'text') e.textContent = String(v);
+            else if (k === 'html') { /* forbidden for user values */ e.textContent = String(v); }
+            else e.setAttribute(k, String(v));
+        }
+    }
+    for (const c of children) {
+        if (c === null || c === undefined || c === '') continue;
+        if (typeof c === 'string') e.appendChild(document.createTextNode(c));
+        else if (Array.isArray(c)) c.forEach(x => { if (x) e.appendChild(x); });
+        else if (c instanceof Node) e.appendChild(c);
+    }
+    return e;
+}
+
+// === Status indicator ===
+function setStatus(text, cls) {
+    const s = document.getElementById('saveStatus');
+    s.textContent = text;
+    s.className = 'badge ' + (cls || 'bg-secondary');
+}
+
+// === Repeatable section builders ===
+
+function addExperience(data = {}) {
+    const container = document.getElementById('experienceContainer');
+    if (container.children.length >= MAX_EXPERIENCE_ENTRIES) {
+        alert('Maximum ' + MAX_EXPERIENCE_ENTRIES + ' experience entries reached.');
+        return;
+    }
+    const card = el('div', {class: 'border rounded p-2 mb-2 bg-white'});
+
+    // Title input
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 exp-title',
+        placeholder: 'Role / Job Title', value: data.title || '', maxlength: '200'}));
+
+    // Organization + Location (row)
+    const row1 = el('div', {class: 'row g-1 mb-1'});
+    row1.appendChild(el('div', {class: 'col-7'},
+        el('input', {type: 'text', class: 'form-control form-control-sm exp-organization',
+            placeholder: 'Organization', value: data.organization || '', maxlength: '200'})));
+    row1.appendChild(el('div', {class: 'col-5'},
+        el('input', {type: 'text', class: 'form-control form-control-sm exp-location',
+            placeholder: 'Location', value: data.location || '', maxlength: '120'})));
+    card.appendChild(row1);
+
+    // Start + End dates (row)
+    const row2 = el('div', {class: 'row g-1 mb-1'});
+    row2.appendChild(el('div', {class: 'col-6'},
+        el('input', {type: 'text', class: 'form-control form-control-sm exp-start',
+            placeholder: 'Start (e.g. Nov 2025)', value: data.start_date || '', maxlength: '50'})));
+    row2.appendChild(el('div', {class: 'col-6'},
+        el('input', {type: 'text', class: 'form-control form-control-sm exp-end',
+            placeholder: 'End (e.g. Present)', value: data.end_date || '', maxlength: '50'})));
+    card.appendChild(row2);
+
+    // Bullets container
+    const bulletsDiv = el('div', {class: 'exp-bullets mb-1'});
+    const bullets = Array.isArray(data.bullets) ? data.bullets : (data.description ? [data.description] : []);
+    if (bullets.length === 0) bullets.push('');
+    bullets.forEach(b => addBullet(bulletsDiv, b));
+    card.appendChild(bulletsDiv);
+
+    const addBulletBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link p-0 me-2'},
+        '+ Add Bullet');
+    addBulletBtn.addEventListener('click', () => addBullet(bulletsDiv, ''));
+    card.appendChild(addBulletBtn);
+
+    const removeBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0'},
+        'Remove Entry');
+    removeBtn.addEventListener('click', () => card.remove());
+    card.appendChild(removeBtn);
+
+    // Wire input listeners for live preview
+    card.addEventListener('input', renderPreview);
+    card.addEventListener('click', renderPreview);
+
+    container.appendChild(card);
+}
+
+function addProject(data = {}) {
+    const container = document.getElementById('projectContainer');
+    if (container.children.length >= MAX_PROJECT_ENTRIES) {
+        alert('Maximum ' + MAX_PROJECT_ENTRIES + ' project entries reached.');
+        return;
+    }
+    const card = el('div', {class: 'border rounded p-2 mb-2 bg-white'});
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 proj-title',
+        placeholder: 'Project Title', value: data.title || '', maxlength: '200'}));
+
+    const row = el('div', {class: 'row g-1 mb-1'});
+    row.appendChild(el('div', {class: 'col-7'},
+        el('input', {type: 'text', class: 'form-control form-control-sm proj-category',
+            placeholder: 'Category (e.g. Computer Vision & AI)', value: data.category || data.tech_stack || '', maxlength: '100'})));
+    row.appendChild(el('div', {class: 'col-5'},
+        el('input', {type: 'text', class: 'form-control form-control-sm proj-tech',
+            placeholder: 'Tech Stack (legacy)', value: data.tech_stack || '', maxlength: '200'})));
+    card.appendChild(row);
+
+    const bulletsDiv = el('div', {class: 'proj-bullets mb-1'});
+    const bullets = Array.isArray(data.bullets) ? data.bullets : (data.description ? [data.description] : []);
+    if (bullets.length === 0) bullets.push('');
+    bullets.forEach(b => addBullet(bulletsDiv, b));
+    card.appendChild(bulletsDiv);
+
+    const addBulletBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link p-0 me-2'}, '+ Add Bullet');
+    addBulletBtn.addEventListener('click', () => addBullet(bulletsDiv, ''));
+    card.appendChild(addBulletBtn);
+
+    const removeBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0'}, 'Remove Entry');
+    removeBtn.addEventListener('click', () => card.remove());
+    card.appendChild(removeBtn);
+
+    card.addEventListener('input', renderPreview);
+    card.addEventListener('click', renderPreview);
+
+    container.appendChild(card);
+}
+
+function addBullet(container, value) {
+    if (container.children.length >= MAX_BULLETS_PER_ENTRY) {
+        alert('Maximum ' + MAX_BULLETS_PER_ENTRY + ' bullets per entry reached.');
+        return;
+    }
+    const row = el('div', {class: 'd-flex align-items-start mb-1'});
+    const input = el('textarea', {class: 'form-control form-control-sm bullet-text flex-grow-1', rows: '1',
+        placeholder: 'Achievement / responsibility...', maxlength: '500'});
+    input.value = value || '';
+    input.addEventListener('input', renderPreview);
+    row.appendChild(input);
+    const rmBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0 ms-2'}, 'x');
+    rmBtn.addEventListener('click', () => { row.remove(); renderPreview(); });
+    row.appendChild(rmBtn);
+    container.appendChild(row);
+}
+
+function addSkillCategory(data = {}) {
+    const container = document.getElementById('skillsContainer');
+    if (container.children.length >= MAX_SKILL_CATEGORIES) {
+        alert('Maximum ' + MAX_SKILL_CATEGORIES + ' skill categories reached.');
+        return;
+    }
+    const card = el('div', {class: 'border rounded p-2 mb-2 bg-white skill-category'});
+
+    const nameRow = el('div', {class: 'd-flex align-items-center mb-1'});
+    const nameInput = el('input', {type: 'text', class: 'form-control form-control-sm skill-name flex-grow-1',
+        placeholder: 'Category name (e.g. Languages)', value: data.name || '', maxlength: '60'});
+    nameRow.appendChild(nameInput);
+    const rmBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0 ms-2'}, 'Remove');
+    rmBtn.addEventListener('click', () => { card.remove(); renderPreview(); });
+    nameRow.appendChild(rmBtn);
+    card.appendChild(nameRow);
+
+    const valuesDiv = el('div', {class: 'skill-values'});
+    const values = Array.isArray(data.values) ? data.values : [];
+    if (values.length === 0) values.push('');
+    values.forEach(v => addSkillValue(valuesDiv, v));
+    card.appendChild(valuesDiv);
+
+    const addValBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link p-0'}, '+ Add Skill');
+    addValBtn.addEventListener('click', () => addSkillValue(valuesDiv, ''));
+    card.appendChild(addValBtn);
+
+    card.addEventListener('input', renderPreview);
+    card.addEventListener('click', renderPreview);
+
+    container.appendChild(card);
+}
+
+function addSkillValue(container, value) {
+    if (container.children.length >= MAX_SKILLS_PER_CATEGORY) {
+        alert('Maximum ' + MAX_SKILLS_PER_CATEGORY + ' skills per category reached.');
+        return;
+    }
+    const row = el('div', {class: 'd-flex align-items-center mb-1'});
+    const input = el('input', {type: 'text', class: 'form-control form-control-sm skill-value flex-grow-1',
+        placeholder: 'Skill (e.g. Python)', value: value || '', maxlength: '100'});
+    input.addEventListener('input', renderPreview);
+    row.appendChild(input);
+    const rmBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0 ms-2'}, 'x');
+    rmBtn.addEventListener('click', () => { row.remove(); renderPreview(); });
+    row.appendChild(rmBtn);
+    container.appendChild(row);
+}
+
+function addCertification(data = {}) {
+    const container = document.getElementById('certificationContainer');
+    if (container.children.length >= MAX_CERTIFICATION_ENTRIES) {
+        alert('Maximum ' + MAX_CERTIFICATION_ENTRIES + ' certification entries reached.');
+        return;
+    }
+    const card = el('div', {class: 'border rounded p-2 mb-2 bg-white'});
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 cert-title',
+        placeholder: 'Certification Title', value: data.title || '', maxlength: '200'}));
+
+    const row1 = el('div', {class: 'row g-1 mb-1'});
+    row1.appendChild(el('div', {class: 'col-7'},
+        el('input', {type: 'text', class: 'form-control form-control-sm cert-issuer',
+            placeholder: 'Issuing Organization', value: data.issuer || '', maxlength: '200'})));
+    row1.appendChild(el('div', {class: 'col-5'},
+        el('input', {type: 'text', class: 'form-control form-control-sm cert-location',
+            placeholder: 'Location', value: data.location || '', maxlength: '120'})));
+    card.appendChild(row1);
+
+    const row2 = el('div', {class: 'row g-1 mb-1'});
+    row2.appendChild(el('div', {class: 'col-6'},
+        el('input', {type: 'text', class: 'form-control form-control-sm cert-start',
+            placeholder: 'Start (e.g. Jun 2025)', value: data.start_date || '', maxlength: '50'})));
+    row2.appendChild(el('div', {class: 'col-6'},
+        el('input', {type: 'text', class: 'form-control form-control-sm cert-end',
+            placeholder: 'End (e.g. Nov 2025)', value: data.end_date || '', maxlength: '50'})));
+    card.appendChild(row2);
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 cert-cert-id',
+        placeholder: 'Certificate ID (optional)', value: data.certificate_id || '', maxlength: '100'}));
+    card.appendChild(el('input', {type: 'url', class: 'form-control form-control-sm mb-1 cert-url',
+        placeholder: 'Verification URL (https://...)', value: data.url || '', maxlength: '500'}));
+
+    const rmBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0'}, 'Remove Entry');
+    rmBtn.addEventListener('click', () => card.remove());
+    card.appendChild(rmBtn);
+
+    card.addEventListener('input', renderPreview);
+    card.addEventListener('click', renderPreview);
+
+    container.appendChild(card);
+}
+
+function addEducation(data = {}) {
+    const container = document.getElementById('educationContainer');
+    if (container.children.length >= MAX_EDUCATION_ENTRIES) {
+        alert('Maximum ' + MAX_EDUCATION_ENTRIES + ' education entries reached.');
+        return;
+    }
+    const card = el('div', {class: 'border rounded p-2 mb-2 bg-white'});
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 edu-degree',
+        placeholder: 'Degree (e.g. B.Tech. in AIML)', value: data.degree || '', maxlength: '200'}));
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 edu-institution',
+        placeholder: 'Institution', value: data.institution || '', maxlength: '200'}));
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 edu-affiliation',
+        placeholder: 'Affiliation (e.g. Affiliated to ... University)', value: data.affiliation || '', maxlength: '300'}));
+
+    const row1 = el('div', {class: 'row g-1 mb-1'});
+    row1.appendChild(el('div', {class: 'col-4'},
+        el('input', {type: 'text', class: 'form-control form-control-sm edu-start',
+            placeholder: 'Start (e.g. 2023)', value: data.start_date || '', maxlength: '20'})));
+    row1.appendChild(el('div', {class: 'col-4'},
+        el('input', {type: 'text', class: 'form-control form-control-sm edu-end',
+            placeholder: 'End (e.g. 2027)', value: data.end_date || '', maxlength: '20'})));
+    const scoreLabelSel = el('select', {class: 'form-control form-control-sm edu-score-label'});
+    [''].concat(['CGPA', 'GPA', 'Percentage']).forEach(opt => {
+        const o = el('option', {value: opt}, opt || 'No score');
+        if (data.score_label === opt) o.selected = true;
+        scoreLabelSel.appendChild(o);
+    });
+    row1.appendChild(el('div', {class: 'col-4'}, scoreLabelSel));
+    card.appendChild(row1);
+
+    card.appendChild(el('input', {type: 'text', class: 'form-control form-control-sm mb-1 edu-score-value',
+        placeholder: 'Score value (e.g. 8.92)', value: data.score_value || '', maxlength: '20'}));
+
+    const rmBtn = el('button', {type: 'button', class: 'btn btn-sm btn-link text-danger p-0'}, 'Remove Entry');
+    rmBtn.addEventListener('click', () => card.remove());
+    card.appendChild(rmBtn);
+
+    card.addEventListener('input', renderPreview);
+    card.addEventListener('change', renderPreview);
+    card.addEventListener('click', renderPreview);
+
+    container.appendChild(card);
+}
+
+// === Data collection (produces v2 shape per blueprint §3.2) ===
+function collectData() {
+    const experience = [];
+    document.querySelectorAll('#experienceContainer > div').forEach(card => {
+        const bullets = [];
+        card.querySelectorAll('.bullet-text').forEach(t => {
+            const v = (t.value || '').trim();
+            if (v) bullets.push(v);
+        });
+        const title = (card.querySelector('.exp-title')?.value || '').trim();
+        if (!title && bullets.length === 0) return;  // skip empty entries
+        experience.push({
+            title: title,
+            organization: (card.querySelector('.exp-organization')?.value || '').trim() || null,
+            location: (card.querySelector('.exp-location')?.value || '').trim() || null,
+            start_date: (card.querySelector('.exp-start')?.value || '').trim() || null,
+            end_date: (card.querySelector('.exp-end')?.value || '').trim() || null,
+            bullets: bullets,
+        });
+    });
+
+    const projects = [];
+    document.querySelectorAll('#projectContainer > div').forEach(card => {
+        const bullets = [];
+        card.querySelectorAll('.bullet-text').forEach(t => {
+            const v = (t.value || '').trim();
+            if (v) bullets.push(v);
+        });
+        const title = (card.querySelector('.proj-title')?.value || '').trim();
+        if (!title && bullets.length === 0) return;
+        projects.push({
+            title: title,
+            category: (card.querySelector('.proj-category')?.value || '').trim() || null,
+            tech_stack: (card.querySelector('.proj-tech')?.value || '').trim() || null,
+            bullets: bullets,
+        });
+    });
+
+    const technical_skills = {_custom: []};
+    document.querySelectorAll('#skillsContainer > .skill-category').forEach(card => {
+        const name = (card.querySelector('.skill-name')?.value || '').trim();
+        if (!name) return;
+        const values = [];
+        card.querySelectorAll('.skill-value').forEach(input => {
+            const v = (input.value || '').trim();
+            if (v) values.push(v);
+        });
+        if (values.length === 0) return;
+        if (DEFAULT_SKILL_CATEGORIES.includes(name)) {
+            technical_skills[name] = values;
+        } else {
+            technical_skills._custom.push({name: name, values: values});
+        }
+    });
+
+    const certifications = [];
+    document.querySelectorAll('#certificationContainer > div').forEach(card => {
+        const title = (card.querySelector('.cert-title')?.value || '').trim();
+        if (!title) return;
+        certifications.push({
+            title: title,
+            issuer: (card.querySelector('.cert-issuer')?.value || '').trim() || null,
+            location: (card.querySelector('.cert-location')?.value || '').trim() || null,
+            start_date: (card.querySelector('.cert-start')?.value || '').trim() || null,
+            end_date: (card.querySelector('.cert-end')?.value || '').trim() || null,
+            certificate_id: (card.querySelector('.cert-cert-id')?.value || '').trim() || null,
+            url: (card.querySelector('.cert-url')?.value || '').trim() || null,
+        });
+    });
+
+    const education = [];
+    document.querySelectorAll('#educationContainer > div').forEach(card => {
+        const degree = (card.querySelector('.edu-degree')?.value || '').trim();
+        if (!degree) return;
+        education.push({
+            degree: degree,
+            institution: (card.querySelector('.edu-institution')?.value || '').trim() || null,
+            affiliation: (card.querySelector('.edu-affiliation')?.value || '').trim() || null,
+            location: null,  // future: add a location field for education
+            start_date: (card.querySelector('.edu-start')?.value || '').trim() || null,
+            end_date: (card.querySelector('.edu-end')?.value || '').trim() || null,
+            score_label: (card.querySelector('.edu-score-label')?.value || '').trim() || null,
+            score_value: (card.querySelector('.edu-score-value')?.value || '').trim() || null,
+        });
+    });
+
+    return {
+        schema_version: 2,
+        template_id: 'dnish_latex_a4',
+        personal: {
+            full_name: document.getElementById('full_name').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value || null,
+            location: document.getElementById('location').value || null,
+            linkedin: document.getElementById('linkedin').value || null,
+            github: document.getElementById('github').value || null,
+            portfolio: document.getElementById('portfolio').value || null,
+        },
+        summary: document.getElementById('summary').value || null,
+        experience: experience,
+        projects: projects,
+        technical_skills: technical_skills,
+        certifications: certifications,
+        education: education,
+    };
+}
+
+// === Live preview (uses textContent/createElement — NEVER innerHTML for user values) ===
+function renderPreview() {
+    const data = collectData();
+    const preview = document.getElementById('previewArea');
+    preview.replaceChildren();  // clear
+
+    if (!data.personal.full_name && !data.personal.email) {
+        const ph = el('div', {class: 'text-center text-muted py-5'},
+            'Start typing to see live preview...');
+        preview.appendChild(ph);
+        return;
+    }
+
+    const wrap = el('div', {
+        class: 'p-4 bg-white shadow-sm',
+        style: 'font-size:14px;color:#333;'
+    });
+
+    // Header: name + contact
+    const name = el('h2', {
+        style: 'color:#0d6efd;border-bottom:2px solid #0d6efd;padding-bottom:5px;margin-bottom:5px;text-align:center;'
+    }, (data.personal.full_name || 'Your Name').toUpperCase());
+    wrap.appendChild(name);
+
+    const contactParts = [];
+    if (data.personal.email) {
+        const a = el('a', {href: 'mailto:' + data.personal.email}, data.personal.email);
+        contactParts.push(a);
+    }
+    if (data.personal.linkedin) {
+        const a = el('a', {href: data.personal.linkedin, target: '_blank'}, data.personal.linkedin);
+        contactParts.push(a);
+    }
+    if (data.personal.phone) contactParts.push(data.personal.phone);
+    if (data.personal.location) contactParts.push(data.personal.location);
+    if (data.personal.github) {
+        const a = el('a', {href: data.personal.github, target: '_blank'}, data.personal.github);
+        contactParts.push(a);
+    }
+    if (data.personal.portfolio) {
+        const a = el('a', {href: data.personal.portfolio, target: '_blank'}, data.personal.portfolio);
+        contactParts.push(a);
+    }
+    if (contactParts.length > 0) {
+        const cp = el('p', {style: 'color:#666;font-size:12px;margin-bottom:15px;text-align:center;'});
+        contactParts.forEach((p, i) => {
+            if (i > 0) cp.appendChild(document.createTextNode(' | '));
+            cp.appendChild(p instanceof Node ? p : document.createTextNode(String(p)));
+        });
+        wrap.appendChild(cp);
+    }
+
+    // Summary
+    if (data.summary && data.summary.trim()) {
+        wrap.appendChild(el('h5', {style: 'color:#333;text-transform:uppercase;font-size:12px;margin-bottom:5px;'}, 'Summary'));
+        wrap.appendChild(el('p', {style: 'margin-bottom:15px;'}, data.summary));
+    }
+
+    // Experience
+    if (data.experience.length > 0) {
+        wrap.appendChild(el('h5', {style: 'color:#333;text-transform:uppercase;font-size:12px;margin-bottom:5px;'}, 'Work Experience'));
+        data.experience.forEach(exp => {
+            const div = el('div', {style: 'margin-bottom:10px;'});
+            const head = el('div', {style: 'display:flex;justify-content:space-between;'});
+            const leftParts = [];
+            leftParts.push(el('b', null, exp.title || ''));
+            if (exp.organization) {
+                leftParts.push(document.createTextNode(' \u2013 '));
+                leftParts.push(el('b', null, exp.organization));
+            }
+            const left = el('span', null);
+            leftParts.forEach(p => left.appendChild(p));
+            head.appendChild(left);
+            if (exp.start_date || exp.end_date) {
+                head.appendChild(el('small', {style: 'color:#666;'},
+                    (exp.start_date || '') + (exp.start_date && exp.end_date ? ' \u2013 ' : '') + (exp.end_date || '')));
+            }
+            div.appendChild(head);
+            (exp.bullets || []).forEach(b => {
+                div.appendChild(el('div', {style: 'margin-top:3px;margin-bottom:0;'},
+                    el('span', null, '\u2022 '), b));
+            });
+            wrap.appendChild(div);
+        });
+    }
+
+    // Projects
+    if (data.projects.length > 0) {
+        wrap.appendChild(el('h5', {style: 'color:#333;text-transform:uppercase;font-size:12px;margin-bottom:5px;margin-top:15px;'}, 'Projects'));
+        data.projects.forEach(proj => {
+            const div = el('div', {style: 'margin-bottom:10px;'});
+            const head = el('div', {style: 'display:flex;justify-content:space-between;'});
+            head.appendChild(el('b', null, proj.title || ''));
+            if (proj.category) head.appendChild(el('small', {style: 'color:#666;'}, proj.category));
+            div.appendChild(head);
+            (proj.bullets || []).forEach(b => {
+                div.appendChild(el('div', {style: 'margin-top:3px;margin-bottom:0;'},
+                    el('span', null, '\u2022 '), b));
+            });
+            wrap.appendChild(div);
+        });
+    }
+
+    // Technical Skills (categorized, two-column table)
+    const skillEntries = [];
+    DEFAULT_SKILL_CATEGORIES.forEach(cat => {
+        if (data.technical_skills[cat] && data.technical_skills[cat].length > 0) {
+            skillEntries.push([cat, data.technical_skills[cat]]);
+        }
+    });
+    Object.keys(data.technical_skills).forEach(cat => {
+        if (cat === '_custom') return;
+        if (DEFAULT_SKILL_CATEGORIES.includes(cat)) return;
+        if (data.technical_skills[cat] && data.technical_skills[cat].length > 0) {
+            skillEntries.push([cat, data.technical_skills[cat]]);
+        }
+    });
+    if (data.technical_skills._custom) {
+        data.technical_skills._custom.forEach(c => {
+            if (c.values && c.values.length > 0) skillEntries.push([c.name, c.values]);
+        });
+    }
+    if (skillEntries.length > 0) {
+        wrap.appendChild(el('h5', {style: 'color:#333;text-transform:uppercase;font-size:12px;margin-bottom:5px;margin-top:15px;'}, 'Technical Skills'));
+        const tbl = el('table', {style: 'width:100%;margin-bottom:15px;font-size:13px;'});
+        skillEntries.forEach(([cat, vals]) => {
+            const tr = el('tr', null);
+            tr.appendChild(el('td', {style: 'font-weight:bold;width:140px;vertical-align:top;'}, cat + ':'));
+            tr.appendChild(el('td', {style: 'vertical-align:top;'}, vals.join(', ')));
+            tbl.appendChild(tr);
+        });
+        wrap.appendChild(tbl);
+    }
+
+    // Certifications
+    if (data.certifications.length > 0) {
+        wrap.appendChild(el('h5', {style: 'color:#333;text-transform:uppercase;font-size:12px;margin-bottom:5px;margin-top:15px;'}, 'Certifications'));
+        data.certifications.forEach(cert => {
+            const div = el('div', {style: 'margin-bottom:10px;'});
+            const head = el('div', {style: 'display:flex;justify-content:space-between;'});
+            head.appendChild(el('b', null, cert.title || ''));
+            if (cert.start_date || cert.end_date) {
+                head.appendChild(el('small', {style: 'color:#666;'},
+                    (cert.start_date || '') + (cert.start_date && cert.end_date ? ' \u2013 ' : '') + (cert.end_date || '')));
+            }
+            div.appendChild(head);
+            const sub = [];
+            if (cert.issuer) sub.push(cert.issuer);
+            if (cert.location) sub.push(cert.location);
+            if (sub.length > 0) {
+                div.appendChild(el('small', {style: 'color:#666;'}, sub.join(', ')));
+            }
+            wrap.appendChild(div);
+        });
+    }
+
+    // Education
+    if (data.education.length > 0) {
+        wrap.appendChild(el('h5', {style: 'color:#333;text-transform:uppercase;font-size:12px;margin-bottom:5px;margin-top:15px;'}, 'Education'));
+        data.education.forEach(edu => {
+            const div = el('div', {style: 'margin-bottom:10px;'});
+            const head = el('div', {style: 'display:flex;justify-content:space-between;'});
+            head.appendChild(el('b', null, edu.degree || ''));
+            if (edu.start_date || edu.end_date) {
+                head.appendChild(el('small', {style: 'color:#666;'},
+                    (edu.start_date || '') + (edu.start_date && edu.end_date ? ' \u2013 ' : '') + (edu.end_date || '')));
+            }
+            div.appendChild(head);
+            const sub = [];
+            if (edu.institution) sub.push(edu.institution);
+            if (edu.score_label && edu.score_value) {
+                sub.push(edu.score_label + ': ' + edu.score_value);
+            } else if (edu.score_value) {
+                sub.push(edu.score_value);
+            }
+            if (sub.length > 0) {
+                div.appendChild(el('small', {style: 'color:#666;'}, sub.join(' | ')));
+            }
+            if (edu.affiliation) {
+                div.appendChild(el('div', {style: 'color:#666;font-size:12px;'}, edu.affiliation));
+            }
+            wrap.appendChild(div);
+        });
+    }
+
+    preview.appendChild(wrap);
+}
+
+// === Event listeners ===
+document.getElementById('builderForm').addEventListener('input', renderPreview);
+document.getElementById('addExperienceBtn').addEventListener('click', () => addExperience({}));
+document.getElementById('addProjectBtn').addEventListener('click', () => addProject({}));
+document.getElementById('addSkillCategoryBtn').addEventListener('click', () => addSkillCategory({}));
+document.getElementById('addCertificationBtn').addEventListener('click', () => addCertification({}));
+document.getElementById('addEducationBtn').addEventListener('click', () => addEducation({}));
+
+// === Save draft ===
+document.getElementById('saveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveBtn');
+    const data = collectData();
+    const formData = new URLSearchParams();
+    formData.append('content_json', JSON.stringify(data));
+
+    btn.disabled = true;
+    setStatus('Saving...', 'bg-warning');
+    try {
+        const res = await fetch('/student/api/resume/draft', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData,
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            setStatus('Saved', 'bg-success');
+        } else {
+            setStatus('Error', 'bg-danger');
+            alert('Save failed: ' + (result.message || 'unknown error'));
+        }
+    } catch (e) {
+        setStatus('Error', 'bg-danger');
+        alert('Network error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        setTimeout(() => setStatus('Idle', 'bg-secondary'), 2500);
+    }
+});
+
+// === Export PDF ===
+document.getElementById('exportBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('exportBtn');
+    const data = collectData();
+    const formData = new URLSearchParams();
+    formData.append('content_json', JSON.stringify(data));
+
+    btn.disabled = true;
+    setStatus('Generating PDF...', 'bg-warning');
+    try {
+        const res = await fetch('/student/api/resume/export', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData,
+        });
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            // Read filename from Content-Disposition if present
+            const cd = res.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename\*=UTF-8''([^;]+)/i) || cd.match(/filename="([^"]+)"/i);
+            a.href = url;
+            a.download = match ? decodeURIComponent(match[1]) : 'My_Resume.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            setStatus('Downloaded', 'bg-success');
+        } else {
+            const err = await res.json().catch(() => ({message: 'unknown error'}));
+            setStatus('Error', 'bg-danger');
+            alert('PDF generation failed: ' + (err.message || 'unknown error'));
+        }
+    } catch (e) {
+        setStatus('Error', 'bg-danger');
+        alert('Network error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        setTimeout(() => setStatus('Idle', 'bg-secondary'), 2500);
+    }
+});
+
+// === Load existing draft (handles both legacy v1 and new v2 shapes) ===
+async function loadDraft() {
+    // Resume Builder uses cookie-based auth; browser sends cookie automatically.
+    // (The legacy `Authorization: Bearer null` header is harmless no-op; left
+    // alone per Phase 2 user directive on not modifying auth code.)
+    try {
+        const res = await fetch('/student/api/resume/draft', {credentials: 'same-origin'});
+        const data = await res.json();
+
+        if (data.draft) {
+            const d = data.draft;  // server returns v2 shape (migrated in-memory if legacy)
+
+            document.getElementById('full_name').value = d.personal?.full_name || '';
+            document.getElementById('email').value = d.personal?.email || '';
+            document.getElementById('phone').value = d.personal?.phone || '';
+            document.getElementById('location').value = d.personal?.location || '';
+            document.getElementById('linkedin').value = d.personal?.linkedin || '';
+            document.getElementById('github').value = d.personal?.github || '';
+            document.getElementById('portfolio').value = d.personal?.portfolio || '';
+            document.getElementById('summary').value = d.summary || '';
+
+            // Experience (v2 has bullets[]; legacy v1 has description wrapped as bullets[0] by migration)
+            (d.experience || []).forEach(e => addExperience(e));
+
+            // Projects
+            (d.projects || []).forEach(p => addProject(p));
+
+            // Technical skills: standard categories + custom
+            const ts = d.technical_skills || {};
+            DEFAULT_SKILL_CATEGORIES.forEach(cat => {
+                if (ts[cat] && ts[cat].length > 0) {
+                    addSkillCategory({name: cat, values: ts[cat]});
+                }
+            });
+            Object.keys(ts).forEach(cat => {
+                if (cat === '_custom' || DEFAULT_SKILL_CATEGORIES.includes(cat)) return;
+                if (ts[cat] && ts[cat].length > 0) {
+                    addSkillCategory({name: cat, values: ts[cat]});
+                }
+            });
+            (ts._custom || []).forEach(c => addSkillCategory({name: c.name, values: c.values}));
+
+            // Certifications
+            (d.certifications || []).forEach(c => addCertification(c));
+
+            // Education
+            (d.education || []).forEach(e => addEducation(e));
+
+            renderPreview();
+        } else {
+            // Pre-populate with the 10 default empty skill categories so the UI is ready
+            // (Optional UX choice; safe to remove if the user prefers a blank start.)
+            // DEFAULT_SKILL_CATEGORIES.forEach(cat => addSkillCategory({name: cat, values: ['']}));
+        }
+    } catch (e) {
+        console.error('Failed to load draft:', e);
+    }
+}
+
+loadDraft();
+</script>
+{% endblock %}

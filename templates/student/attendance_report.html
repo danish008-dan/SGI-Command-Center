@@ -1,0 +1,100 @@
+<!-- templates/student/attendance_report.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Attendance Report{% endblock %}
+{% block page_title %}My Attendance{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid" id="attContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Attendance...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadAttendance() {
+    try {
+        const res = await fetch("/student/api/attendance", { headers: { "Authorization": "Bearer " + getToken() } });
+        if (!res.ok) throw new Error("Failed to fetch attendance");
+        const data = await res.json();
+
+        const container = document.getElementById("attContent");
+
+        let summaryHtml = '<p class="text-muted">No attendance records found.</p>';
+        if (data.report && data.report.length > 0) {
+            summaryHtml = `
+                <div class="card shadow-sm mb-4" data-aos="fade-up">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Subject-wise Summary</h5>
+                        <span class="badge bg-primary fs-6">Overall: ${data.overall}%</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>Subject</th><th class="text-center">Total</th><th class="text-center text-success">Present</th><th class="text-center text-danger">Absent</th><th class="text-center">%</th></tr>
+                            </thead>
+                            <tbody>
+                                ${data.report.map(r => `
+                                    <tr>
+                                        <td>${r.subject_name}</td>
+                                        <td class="text-center">${r.total_classes}</td>
+                                        <td class="text-center text-success fw-bold">${r.present}</td>
+                                        <td class="text-center text-danger fw-bold">${r.absent}</td>
+                                        <td class="text-center fw-bold ${r.percentage < 75 ? 'text-danger' : 'text-success'}">${r.percentage}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        let logHtml = '<p class="text-muted">No detailed attendance log available.</p>';
+        if (data.log && data.log.length > 0) {
+            logHtml = `
+                <div class="card shadow-sm" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0">Date-wise Log</h5></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>Date</th><th>Subject</th><th class="text-center">Status</th></tr>
+                            </thead>
+                            <tbody>
+                                ${data.log.map(l => `
+                                    <tr>
+                                        <td>${l.attendance_date}</td>
+                                        <td>${l.subject_name} <small class="text-muted">(${l.subject_code || '-'})</small></td>
+                                        <td class="text-center">
+                                            <span class="badge bg-${l.status === 'Present' ? 'success' : 'danger'}">${l.status}</span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = summaryHtml + logHtml;
+        AOS.init();
+
+    } catch (error) {
+        document.getElementById("attContent").innerHTML = '<div class="alert alert-danger">Error loading attendance data.</div>';
+    }
+}
+
+loadAttendance();
+</script>
+{% endblock %}

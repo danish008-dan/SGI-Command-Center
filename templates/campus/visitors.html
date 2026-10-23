@@ -1,0 +1,104 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Visitor Management{% endblock %}
+{% block page_title %}Visitor Management & Gate Pass{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card cmd-center-card p-3 text-center"><p class="cmd-stat-label">Today's Visits</p><h3 class="cmd-stat-value">{{ stats.today_visits }}</h3></div></div>
+        <div class="col-md-4"><div class="card cmd-center-card p-3 text-center"><p class="cmd-stat-label">Currently Checked In</p><h3 class="cmd-stat-value text-success">{{ stats.checked_in }}</h3></div></div>
+        <div class="col-md-4"><div class="card cmd-center-card p-3 text-center"><p class="cmd-stat-label">Pending Approvals</p><h3 class="cmd-stat-value text-warning">{{ stats.pending_approval }}</h3></div></div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Visitor Log</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addVisitorModal">Register Visitor</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Visitor</th><th>Host</th><th>Purpose</th><th>Date</th><th>Approval</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for v in visitors %}
+                        <tr>
+                            <td class="fw-bold">{{ v.full_name }}<br><small class="text-muted">{{ v.mobile }}</small></td>
+                            <td>{{ v.host_name }} <small class="text-muted">({{ v.department_name or '-' }})</small></td>
+                            <td>{{ v.purpose }}</td>
+                            <td>{{ v.visit_date }}</td>
+                            <td><span class="badge bg-{% if v.approval_status == 'Approved' %}success{% elif v.approval_status == 'Pending' %}warning{% else %}danger{% endif %}">{{ v.approval_status }}</span></td>
+                            <td><span class="badge bg-{% if v.status == 'Checked In' %}primary{% elif v.status == 'Checked Out' %}secondary{% else %}info{% endif %}">{{ v.status }}</span></td>
+                            <td>
+                                {% if v.approval_status == 'Pending' %}
+                                <form action="/admin/api/campus/visitors/approve" method="POST" class="d-inline">
+                                    <input type="hidden" name="visitor_id" value="{{ v.visitor_id }}">
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                {% elif v.approval_status == 'Approved' and v.status == 'Scheduled' %}
+                                <form action="/admin/api/campus/visitors/checkin" method="POST" class="d-inline">
+                                    <input type="hidden" name="visitor_id" value="{{ v.visitor_id }}">
+                                    <button type="submit" class="btn btn-sm btn-primary">Check In</button>
+                                </form>
+                                <a href="/admin/campus/visitors/{{ v.visitor_id }}/pass/pdf" class="btn btn-sm btn-outline-danger" target="_blank">Pass</a>
+                                {% elif v.status == 'Checked In' %}
+                                <form action="/admin/api/campus/visitors/checkout" method="POST" class="d-inline">
+                                    <input type="hidden" name="visitor_id" value="{{ v.visitor_id }}">
+                                    <button type="submit" class="btn btn-sm btn-dark">Check Out</button>
+                                </form>
+                                {% elif v.status == 'Checked Out' %}
+                                <a href="/admin/campus/visitors/{{ v.visitor_id }}/pass/pdf" class="btn btn-sm btn-outline-secondary" target="_blank">View Pass</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No visitors registered.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Visitor Modal -->
+<div class="modal fade" id="addVisitorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="visitorForm">
+                <div class="modal-header"><h5 class="modal-title">Register New Visitor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Visitor Name *</label><input type="text" class="form-control" name="full_name" required></div>
+                    <div class="mb-3"><label class="form-label">Mobile Number *</label><input type="text" class="form-control" name="mobile" required></div>
+                    <div class="mb-3"><label class="form-label">Host (Employee) *</label>
+                        <select class="form-select" name="host_user_id" required>
+                            <option value="">Select Host</option>
+                            {% for h in hosts %}<option value="{{ h.user_id }}">{{ h.full_name }} ({{ h.role }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Purpose of Visit *</label><input type="text" class="form-control" name="purpose" required></div>
+                    <div class="mb-3"><label class="form-label">Visit Date *</label><input type="date" class="form-control" name="visit_date" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Register</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("visitorForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/campus/visitors/register", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

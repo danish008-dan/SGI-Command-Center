@@ -1,0 +1,55 @@
+<!-- templates/teacher/subjects.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}My Subjects{% endblock %}
+{% block page_title %}My Subjects{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Assigned Academic Subjects</h5></div>
+        <div class="card-body" id="subjBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("subjBody");
+
+    if(data.length === 0) {
+        body.innerHTML = '<p class="text-center text-muted py-4">No subjects assigned to you yet.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Code</th><th>Subject Name</th><th>Sem</th><th>Section</th><th>Type</th><th class="text-center">Credits</th><th class="text-center">Hrs/Week</th></tr></thead>
+        <tbody>`;
+
+    data.forEach(s => {
+        html += `<tr>
+            <td><b>${s.subject_code}</b></td>
+            <td>${s.subject_name}</td>
+            <td>${s.semester}</td>
+            <td>${s.section || '-'}</td>
+            <td><span class="badge bg-info">${s.subject_type}</span></td>
+            <td class="text-center">${s.credits}</td>
+            <td class="text-center fw-bold">${s.classes_per_week}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+# --- Web Framework Dependencies ---
+fastapi
+uvicorn
+jinja2
+python-multipart
+python-dotenv
+pyjwt
+
+# --- Database & Security ---
+pymysql
+bcrypt
+
+# --- AI & Data Visualization ---
+groq
+matplotlib
+reportlab
+pillow
+
+qrcode==7.4.2
+Pillow==10.0.0
+
+# --- AI Orchestration FOR PRINCIPAL ---
+langchain-core
+langgraph
+langchain-openai
+openai
+
+# --- Resume Builder validation (blueprint v2 §8.7) ---
+# FastAPI transitively pulls in pydantic; pin >=2.0 for v2 model_validator/field_validator API.
+pydantic>=2.0

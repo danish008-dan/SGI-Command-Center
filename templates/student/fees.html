@@ -1,0 +1,168 @@
+<!-- templates/student/fees.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Fee Status{% endblock %}
+{% block page_title %}My Fees{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid" id="feesContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Fee Details...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadFees() {
+    try {
+        const res = await fetch("/student/api/fees", {
+            headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") }
+        });
+        if (!res.ok) throw new Error("Failed to fetch fees");
+        const data = await res.json();
+
+        const container = document.getElementById("feesContent");
+        const s = data.summary || {};
+        const history = data.history || [];
+
+        let historyHtml = '<tr><td colspan="4" class="text-center text-muted">No payment history yet.</td></tr>';
+        if (history.length > 0) {
+            historyHtml = history.map(h => `
+                <tr>
+                    <td>${new Date(h.payment_date).toLocaleDateString()}</td>
+                    <td>${h.receipt_number}</td>
+                    <td class="fw-bold">₹${h.amount_paid}</td>
+                    <td class="text-end">
+                        <a href="/student/receipts/${h.payment_id}/pdf" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-download"></i> Receipt
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        const payable = s.payable_fee || 0;
+        const paid = s.paid || 0;
+        const pending = payable - paid;
+
+        container.innerHTML = `
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4" data-aos="zoom-in">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100 text-center">
+                        <p class="mb-1 small opacity-75">Total Applicable Fee</p>
+                        <h4 class="mb-0">₹${payable.toLocaleString()}</h4>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100 text-center">
+                        <p class="mb-1 small opacity-75">Paid Amount</p>
+                        <h4 class="mb-0">₹${paid.toLocaleString()}</h4>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white h-100 text-center">
+                        <p class="mb-1 small opacity-75">Pending Balance</p>
+                        <h4 class="mb-0">₹${pending.toLocaleString()}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History & Actions -->
+            <div class="card shadow-sm" data-aos="fade-up">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Payment History</h5>
+                    ${pending > 0 ? `<button class="btn btn-sm btn-warning" onclick="document.getElementById('payModal').classList.remove('d-none')">
+                        <i class="bi bi-credit-card"></i> Simulated Payment (Demo)
+                    </button>` : ''}
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr><th>Date</th><th>Receipt No</th><th>Amount</th><th class="text-end">Receipt</th></tr>
+                        </thead>
+                        <tbody>${historyHtml}</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Simulated Pay Modal -->
+            <div class="modal d-block d-none" id="payModal" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Simulated Payment Gateway</h5>
+                            <button type="button" class="btn-close" onclick="document.getElementById('payModal').classList.add('d-none')"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning small">
+                                <i class="bi bi-info-circle"></i> This is a demo gateway. No real money will be deducted.
+                            </div>
+                            <form id="payForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Amount (Max: ₹${pending})</label>
+                                    <input type="number" class="form-control" name="amount" max="${pending}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Mode</label>
+                                    <select class="form-select" name="mode">
+                                        <option value="UPI">UPI</option>
+                                        <option value="Card">Card</option>
+                                        <option value="Net Banking">Net Banking</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Proceed to Pay (Demo)</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+
+        document.getElementById("payForm")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(e.target));
+            const res = await fetch("/student/api/payment/create", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + localStorage.getItem("access_token"),
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                const verifyRes = await fetch("/student/api/payment/verify", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: new URLSearchParams({ transaction_id: data.transaction_id, gateway_txn_id: data.gateway_txn_id })
+                });
+                const verifyData = await verifyRes.json();
+                alert(verifyData.message);
+                if (verifyData.success) {
+                    document.getElementById('payModal').classList.add('d-none');
+                    loadFees(); // Reload
+                }
+            } else {
+                alert(data.message);
+            }
+        });
+
+    } catch (error) {
+        document.getElementById("feesContent").innerHTML = '<div class="alert alert-danger">Error loading fee data.</div>';
+    }
+}
+loadFees();
+</script>
+{% endblock %}

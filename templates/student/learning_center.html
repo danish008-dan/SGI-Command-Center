@@ -1,0 +1,123 @@
+<!-- templates/student/learning_center.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Learning Center{% endblock %}
+{% block page_title %}Academic Engagement{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="container-fluid" id="lcContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Loading Learning Center...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadLearningCenter() {
+    try {
+        const [assRes, matRes] = await Promise.all([
+            fetch("/student/api/assignments", { headers: { "Authorization": "Bearer " + getToken() } }),
+            fetch("/student/api/materials", { headers: { "Authorization": "Bearer " + getToken() } })
+        ]);
+
+        const assData = await assRes.json();
+        const matData = await matRes.json();
+
+        const assignments = assData.assignments || [];
+        const materials = matData.materials || [];
+
+        const pending = assignments.filter(a => a.submission_status === "Pending").length;
+        const submitted = assignments.filter(a => a.submission_status === "Submitted").length;
+
+        const container = document.getElementById("lcContent");
+        container.innerHTML = `
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4" data-aos="zoom-in">
+                    <a href="/student/assignments" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100 text-center">
+                            <h2 class="mb-0">${assignments.length}</h2>
+                            <p class="mb-0 opacity-75 small">Total Assignments</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                    <a href="/student/assignments" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white h-100 text-center">
+                            <h2 class="mb-0">${pending}</h2>
+                            <p class="mb-0 opacity-75 small">Pending Submissions</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                    <a href="/student/materials" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100 text-center">
+                            <h2 class="mb-0">${materials.length}</h2>
+                            <p class="mb-0 opacity-75 small">Learning Materials</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Assignments -->
+            <div class="card shadow-sm mb-4" data-aos="fade-up">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Assignments</h5>
+                    <a href="/student/assignments" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body">
+                    ${assignments.length === 0 ? '<p class="text-muted text-center">No assignments available.</p>' : `
+                    <div class="list-group">
+                        ${assignments.slice(0, 3).map(a => `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 text-primary">${a.title}</h6>
+                                    <small class="text-muted">${a.subject_name} | Due: ${a.due_date || 'N/A'}</small>
+                                </div>
+                                <span class="badge bg-${a.submission_status === 'Submitted' ? 'success' : 'warning'}">${a.submission_status}</span>
+                            </div>
+                        `).join('')}
+                    </div>`}
+                </div>
+            </div>
+
+            <!-- Recent Materials -->
+            <div class="card shadow-sm" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Learning Materials</h5>
+                    <a href="/student/materials" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="card-body">
+                    ${materials.length === 0 ? '<p class="text-muted text-center">No materials available.</p>' : `
+                    <div class="list-group">
+                        ${materials.slice(0, 3).map(m => `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 text-primary">${m.title}</h6>
+                                    <small class="text-muted">Published: ${m.created_at}</small>
+                                </div>
+                                <span class="badge bg-info">Approved</span>
+                            </div>
+                        `).join('')}
+                    </div>`}
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch (error) {
+        document.getElementById("lcContent").innerHTML = '<div class="alert alert-danger">Error loading Learning Center.</div>';
+    }
+}
+
+loadLearningCenter();
+</script>
+{% endblock %}

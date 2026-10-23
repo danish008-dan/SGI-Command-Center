@@ -1,0 +1,48 @@
+{% extends "principal/principal_layout.html" %}
+{% block title %}HR & Payroll Oversight{% endblock %}
+{% block page_title %}HR & Payroll Oversight{% endblock %}
+{% block content %}
+<div class="container-fluid" id="hrOversight">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/principal/api/hr", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const s = await res.json();
+    const c = document.getElementById("hrOversight");
+    c.innerHTML = `
+        <div class="row g-4 mb-4">
+            <div class="col-md-4" data-aos="zoom-in">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100">
+                    <div><p class="mb-1 opacity-75">Total Workforce</p><h2 class="mb-0">${s.total_workforce}</h2><small class="opacity-75">Faculty: ${s.faculty} | Staff: ${s.staff}</small></div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100">
+                    <div><p class="mb-1 opacity-75">Gross Payroll (Active)</p><h2 class="mb-0">₹${s.gross_payroll.toLocaleString()}</h2></div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100">
+                    <div><p class="mb-1 opacity-75">Net Payable (Active)</p><h2 class="mb-0">₹${s.net_payroll.toLocaleString()}</h2></div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-12" data-aos="fade-up">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3"><h5 class="mb-0">HR Actions</h5></div>
+                    <div class="card-body">
+                        <p>Pending Salary Revision Approvals: <b class="text-warning">${s.pending_revisions}</b></p>
+                        <small class="text-muted">Note: Individual employee salary breakdowns are restricted to HR/Admin roles.</small>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    AOS.init();
+}
+loadData();
+</script>
+{% endblock %}

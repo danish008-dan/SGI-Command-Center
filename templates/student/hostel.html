@@ -1,0 +1,141 @@
+{% extends "student/student_layout.html" %}
+{% block title %}My Hostel{% endblock %}
+{% block page_title %}Hostel Allocation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4" data-aos="fade-up">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 text-primary">Hostel Service Preference</h5>
+            <p class="text-muted small mb-0">Turn this OFF if you live at home or in private accommodation. Turning it OFF does not cancel an existing room allocation or hostel-related financial obligation.</p>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="hostelToggle" style="width: 3em; height: 1.5em;" disabled>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" id="hostelAllocationContent">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+let currentHostelAllocation = null;
+
+async function loadHostelData() {
+    try {
+        const res = await fetch("/student/api/hostel", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+        if (!res.ok) throw new Error("Failed to load data");
+        const data = await res.json();
+
+        currentHostelAllocation = data.allocation;
+        const isEnabled = data.service_enabled === true;
+
+        const toggle = document.getElementById("hostelToggle");
+        toggle.checked = isEnabled;
+        toggle.disabled = false;
+
+        renderHostelUI();
+    } catch (error) {
+        document.getElementById("hostelAllocationContent").innerHTML = '<div class="alert alert-danger">Error loading hostel details.</div>';
+    }
+}
+
+function renderHostelUI() {
+    const c = document.getElementById("hostelAllocationContent");
+    const isEnabled = document.getElementById("hostelToggle").checked;
+
+    if (!isEnabled) {
+        if (currentHostelAllocation) {
+            c.innerHTML = '<div class="alert alert-warning">Your hostel service preference is OFF. Your existing allocation remains active and is not cancelled.</div>';
+        } else {
+            c.innerHTML = '<div class="alert alert-info text-center">Hostel service is disabled in your preferences. Turn it on to view allocation details.</div>';
+        }
+        return;
+    }
+
+    if (!currentHostelAllocation) {
+        c.innerHTML = '<div class="alert alert-info text-center">You do not have an active hostel allocation.</div>';
+        return;
+    }
+
+    const a = currentHostelAllocation;
+    c.innerHTML = `
+        <div class="card shadow-sm" data-aos="fade-up">
+            <div class="card-header bg-white py-3"><h5 class="mb-0 text-primary">Current Allocation Details</h5></div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted small">Hostel Name</p>
+                        <h5 class="mb-3">${a.hostel_name}</h5>
+                        <p class="mb-1 text-muted small">Room Number & Type</p>
+                        <h5 class="mb-3">${a.room_number} <span class="badge bg-info">${a.room_type}</span></h5>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted small">Bed Number</p>
+                        <h5 class="mb-3">${a.bed_number}</h5>
+                        <p class="mb-1 text-muted small">Check-in Date</p>
+                        <h5 class="mb-3">${a.check_in_date}</h5>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <span class="badge bg-success p-2 fs-6">Status: ${a.status}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    AOS.init();
+}
+
+document.getElementById("hostelToggle").addEventListener("change", async function(e) {
+    const toggle = e.target;
+    const newEnabledState = toggle.checked;
+    toggle.disabled = true;
+
+    try {
+        const res = await fetch("/student/api/preferences/service", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem('access_token')
+            },
+            body: JSON.stringify({ service_type: "hostel", enabled: newEnabledState })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            renderHostelUI();
+            showToast("Hostel preference updated.", "success");
+        } else {
+            toggle.checked = !newEnabledState; // Revert
+            showToast(data.message || "Failed to update.", "danger");
+        }
+    } catch (err) {
+        toggle.checked = !newEnabledState; // Revert
+        showToast("Network error.", "danger");
+    } finally {
+        toggle.disabled = false;
+    }
+});
+
+function showToast(message, type) {
+    const div = document.createElement('div');
+    div.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    div.style.zIndex = 9999;
+    div.textContent = message;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+loadHostelData();
+</script>
+{% endblock %}

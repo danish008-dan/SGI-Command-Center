@@ -1,0 +1,41 @@
+<!-- templates/teacher/notices.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Notices{% endblock %}
+{% block page_title %}Department & Institute Notices{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Notice Board</h5></div>
+        <div class="card-body" id="notBody"><div class="text-center py-5"><div class="spinner-border text-primary"></div></div></div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/notices", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("notBody");
+
+    if(data.notices.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center">No notices available.</p>';
+        return;
+    }
+
+    let h = '<div class="list-group">';
+    data.notices.forEach(n => {
+        let badge = n.target_audience === 'All' ? 'success' : 'primary';
+        h += `<div class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1">${n.title}</h6>
+                <small class="badge bg-${badge}">${n.target_audience}</small>
+            </div>
+            <p class="mb-1 text-muted small">${n.description}</p>
+            <small>${new Date(n.posted_on).toLocaleDateString()}</small>
+        </div>`;
+    });
+    body.innerHTML = h + '</div>';
+}
+loadData();
+</script>
+{% endblock %}

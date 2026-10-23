@@ -1,0 +1,27 @@
+<!-- templates/teacher/workload.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}My Workload{% endblock %}
+{% block page_title %}Faculty Workload{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Teaching Load Summary</h5></div>
+        <div class="card-body" id="wlBody"><div class="text-center py-5"><div class="spinner-border text-primary"></div></div></div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/workload", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("wlBody");
+
+    let h = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Subject</th><th>Code</th><th>Section</th><th class="text-center">Hrs/Week</th></tr></thead><tbody>`;
+    data.subjects.forEach(s => h += `<tr><td>${s.subject_name}</td><td>${s.subject_code}</td><td>${s.section || '-'}</td><td class="text-center fw-bold">${s.classes_per_week}</td></tr>`);
+    h += `</tbody><tfoot class="table-light"><tr><th colspan="3" class="text-end">Total Workload</th><th class="text-center text-primary fs-5">${data.total_hours} hrs/week</th></tr></tfoot></table></div>`;
+    body.innerHTML = h;
+}
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Exit & Clearance{% endblock %}
+{% block page_title %}Employee Exit & Clearance Workflow{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Create Exit Request -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Initiate Exit Request</h5></div>
+        <div class="card-body">
+            <form id="exitForm" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Select Employee</label>
+                    <select class="form-select" name="employee_id" required>
+                        <option value="">Select Staff</option>
+                        {% for e in employees %}<option value="{{ e.employee_id }}">{{ e.full_name }} ({{ e.employee_code }})</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Exit Type</label>
+                    <select class="form-select" name="exit_type" required>
+                        <option>Resignation</option><option>Retirement</option><option>Termination</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Last Working Day</label>
+                    <input type="date" class="form-control" name="last_working_day" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Reason</label>
+                    <input type="text" class="form-control" name="reason" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Exit Clearance Requests</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Employee</th><th>Code</th><th>Exit Type</th><th>Last Day</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in requests %}
+                        <tr>
+                            <td>{{ r.full_name }}</td>
+                            <td>{{ r.employee_code }}</td>
+                            <td><span class="badge bg-info">{{ r.exit_type }}</span></td>
+                            <td>{{ r.last_working_day }}</td>
+                            <td><span class="badge bg-{% if r.status == 'Cleared' %}success{% elif r.status == 'Rejected' %}danger{% else %}warning{% endif %}">{{ r.status }}</span></td>
+                            <td>
+                                {% if r.status == 'Pending' %}
+                                <button class="btn btn-sm btn-success clear-btn" data-id="{{ r.clearance_id }}">Clear & Approve</button>
+                                <button class="btn btn-sm btn-danger reject-btn" data-id="{{ r.clearance_id }}">Reject</button>
+                                {% elif r.status == 'Cleared' %}
+                                <a href="/admin/hr/relieving/{{ r.clearance_id }}/pdf" class="btn btn-sm btn-outline-primary" target="_blank">Relieving Letter</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No exit requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("exitForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/admin/api/hr/exits/add", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+});
+
+document.querySelectorAll('.clear-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const settlement = prompt("Enter final settlement amount (₹):", "0");
+        if(settlement === null) return;
+        
+        const formData = new URLSearchParams();
+        formData.append("clearance_id", id);
+        formData.append("action", "Cleared");
+        formData.append("settlement_amount", settlement);
+        
+        const res = await fetch("/admin/api/hr/exits/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    });
+});
+
+document.querySelectorAll('.reject-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        if(!confirm("Reject this exit request?")) return;
+        const formData = new URLSearchParams();
+        formData.append("clearance_id", this.dataset.id);
+        formData.append("action", "Rejected");
+        
+        const res = await fetch("/admin/api/hr/exits/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    });
+});
+</script>
+{% endblock %}

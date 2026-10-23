@@ -1,0 +1,61 @@
+<!-- templates/teacher/reports.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Academic Reports{% endblock %}
+{% block page_title %}Subject Academic Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="reportContainer">
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadReport() {
+    const res = await fetch("/teacher/api/reports/academic", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const c = document.getElementById("reportContainer");
+
+    let analyticsHtml = '<li class="list-group-item">No assessment data available.</li>';
+    if(data.assessment_analytics && data.assessment_analytics.length > 0) {
+        analyticsHtml = data.assessment_analytics.map(a => `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                ${a.subject_name} - ${a.exam_type}
+                <span class="badge bg-primary rounded-pill">Avg: ${a.average} / ${a.max_marks}</span>
+            </li>
+        `).join('');
+    }
+
+    c.innerHTML = `
+        <div class="row g-4 mb-4">
+            <div class="col-md-4" data-aos="zoom-in">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white h-100 text-center">
+                    <h2 class="mb-0">${data.total_assignments}</h2>
+                    <p class="mb-0 opacity-75 small">Total Assignments Created</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white h-100 text-center">
+                    <h2 class="mb-0">${data.syllabus_coverage}%</h2>
+                    <p class="mb-0 opacity-75 small">Syllabus Coverage (${data.total_units} Units)</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white h-100 text-center">
+                    <h2 class="mb-0">${data.assessment_analytics ? data.assessment_analytics.length : 0}</h2>
+                    <p class="mb-0 opacity-75 small">Assessments Conducted</p>
+                </div>
+            </div>
+        </div>
+        <div class="card shadow-sm" data-aos="fade-up">
+            <div class="card-header bg-white py-3"><h5 class="mb-0">Assessment Averages</h5></div>
+            <div class="card-body">
+                <ul class="list-group">${analyticsHtml}</ul>
+            </div>
+        </div>
+    `;
+    AOS.init();
+}
+loadReport();
+</script>
+{% endblock %}

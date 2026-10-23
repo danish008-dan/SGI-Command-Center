@@ -1,0 +1,63 @@
+<!-- templates/principal/sensitive_complaints.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}Sensitive Complaints{% endblock %}
+{% block page_title %}Restricted Grievance Queue{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="alert alert-warning">
+        <i class="bi bi-shield-lock"></i> <strong>Confidential:</strong> These complaints contain sensitive information. Access is strictly logged.
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Pending Sensitive Complaints</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ref ID</th><th>Student</th><th>Dept</th><th>Category</th><th>Date</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in complaints %}
+                        <tr>
+                            <td class="fw-bold">CMP{{ "%06d"|format(c.complaint_id) }}</td>
+                            <td>{{ c.student_name }}</td>
+                            <td>{{ c.department_name or '-' }}</td>
+                            <td><span class="badge bg-danger">{{ c.category }}</span></td>
+                            <td>{{ c.created_at }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="resolveComplaint({{ c.complaint_id }})">Mark Resolved</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No sensitive complaints.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function resolveComplaint(id) {
+    if(!confirm("Mark this sensitive complaint as resolved?")) return;
+
+    const formData = new URLSearchParams();
+    formData.append("complaint_id", id);
+    formData.append("status", "Resolved");
+
+    const res = await fetch("/admin/api/complaints/update", { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.success ? "Complaint resolved." : "Failed to resolve.");
+    if(data.success) location.reload();
+}
+</script>
+{% endblock %}

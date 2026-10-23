@@ -1,0 +1,66 @@
+<!-- templates/admin/finance_reports.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Finance Reports{% endblock %}
+{% block page_title %}Finance & Reconciliation Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Daily Collection Report -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Today's Collection by Mode</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead class="table-light">
+                        <tr><th>Payment Mode</th><th>Transactions</th><th>Total Collected</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in daily_report %}
+                        <tr>
+                            <td>{{ r.payment_mode }}</td>
+                            <td>{{ r.count }}</td>
+                            <td class="fw-bold text-success">₹ {{ "%.2f"|format(r.total) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">No collections today.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refund Register -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Refund & Reversal Register</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr><th>Refund ID</th><th>Student</th><th>Original Receipt</th><th>Refund Amount</th><th>Reason</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in refunds %}
+                        <tr>
+                            <td>{{ r.refund_id }}</td>
+                            <td>{{ r.student_name }}</td>
+                            <td>{{ r.original_receipt }}</td>
+                            <td class="text-danger fw-bold">- ₹ {{ "%.2f"|format(r.refund_amount) }}</td>
+                            <td>{{ r.reason }}</td>
+                            <td>{{ r.processed_at }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-3">No refunds processed.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}HR Dashboard{% endblock %}
+{% block page_title %}HR & Payroll Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards Row 1 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Staff</p>
+                <h3 class="cmd-stat-value">{{ stats.total }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Active</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.active }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Probationary</p>
+                <h3 class="cmd-stat-value text-warning">{{ stats.probation }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Pending Exits</p>
+                <h3 class="cmd-stat-value text-danger">{{ stats.exits }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards Row 2 (More Interactive) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-warning">
+                <p class="cmd-stat-label">Pending Revisions</p>
+                <h3 class="cmd-stat-value text-warning">{{ stats.pending_revisions }}</h3>
+                <a href="/admin/hr/salary-revisions" class="small text-muted">View Requests</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-info">
+                <p class="cmd-stat-label">Payroll Processed</p>
+                <h3 class="cmd-stat-value text-info">{{ stats.paid_payroll }}</h3>
+                <a href="/admin/hr/payroll" class="small text-muted">View Payroll</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-primary">
+                <p class="cmd-stat-label">Total Monthly Cost</p>
+                <h3 class="cmd-stat-value text-primary">₹{{ "%.0f"|format(stats.total_salary_cost) }}</h3>
+                <span class="small text-muted">Gross Earnings</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-success">
+                <p class="cmd-stat-label">Employees Paid</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.employees_paid }}</h3>
+                <span class="small text-muted">This Period</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Recent Employee Activity</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Employee Name</th><th>Designation</th><th>Joining Date</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for e in recent_employees %}
+                        <tr>
+                            <td class="fw-bold">{{ e.full_name }}</td>
+                            <td>{{ e.designation }}</td>
+                            <td>{{ e.joining_date }}</td>
+                            <td><span class="badge bg-{% if e.status == 'Active' %}success{% else %}danger{% endif %}">{{ e.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No recent activity.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

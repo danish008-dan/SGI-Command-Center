@@ -1,0 +1,175 @@
+<!-- templates/admin/notices.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Notice Management{% endblock %}
+{% block page_title %}Notice Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Create Notice Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="bi bi-megaphone"></i> Create New Notice</h5></div>
+        <div class="card-body">
+            <form id="noticeForm" enctype="multipart/form-data">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Title *</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Category *</label>
+                        <select class="form-select" name="category" required>
+                            <option value="General">General</option>
+                            <option value="Administrative">Administrative</option>
+                            <option value="Academic">Academic</option>
+                            <option value="Examination">Examination</option>
+                            <option value="Holiday">Holiday</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Description *</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Target Audience *</label>
+                        <select class="form-select" name="target_audience" required>
+                            <option value="All">All (Institution-wide)</option>
+                            <option value="Students">All Students</option>
+                            <option value="Teachers">All Teachers</option>
+                            <option value="Department">Specific Department</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Publish At (Schedule)</label>
+                        <input type="datetime-local" class="form-control" name="publish_at">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Expire At</label>
+                        <input type="datetime-local" class="form-control" name="expire_at">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Attachment (Optional)</label>
+                        <input type="file" class="form-control" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i> Submit/Publish Notice</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Existing Notices Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">All Notices</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Title</th><th>Category</th><th>Status</th><th>Created By</th><th>Action</th><th>Attachment</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notices %}
+                        <tr>
+                            <td>{{ n.title }}</td>
+                            <td>{{ n.category }}</td>
+                            <td><span class="badge bg-{% if n.status == 'Published' %}success{% elif n.status == 'Pending' %}warning{% elif n.status == 'Approved' %}info{% else %}secondary{% endif %}">{{ n.status }}</span></td>
+                            <td>{{ n.creator_name }}</td>
+                            <td>
+                                {% if n.status == 'Approved' %}
+                                <form action="/admin/api/notices/publish" method="POST" class="d-inline">
+                                    <input type="hidden" name="notice_id" value="{{ n.notice_id }}">
+                                    <button type="submit" class="btn btn-sm btn-success">Publish Now</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if n.attachment_path %}
+                                <a href="{{ n.attachment_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-download"></i> View
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No notices found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Management Card -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white py-3"><h5 class="mb-0"><i class="bi bi-calendar-event"></i> Create Event</h5></div>
+        <div class="card-body">
+            <form id="eventForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Event Name *</label>
+                        <input type="text" class="form-control" name="event_name" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date *</label>
+                        <input type="date" class="form-control" name="event_date" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Venue *</label>
+                        <input type="text" class="form-control" name="venue" required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Organizer</label>
+                        <input type="text" class="form-control" name="organizer">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Target Audience *</label>
+                        <select class="form-select" name="target_audience" required>
+                            <option value="All">All</option>
+                            <option value="Students">All Students</option>
+                            <option value="Teachers">All Teachers</option>
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create Event</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("noticeForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/notices/add", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+
+document.getElementById("eventForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/events/add", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+
+</script>
+{% endblock %}

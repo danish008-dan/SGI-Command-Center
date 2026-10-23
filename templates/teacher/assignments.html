@@ -1,0 +1,135 @@
+<!-- templates/teacher/assignments.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Assignments{% endblock %}
+{% block page_title %}Assignments & Submissions{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/teacher/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+<div class="container-fluid">
+    <div class="card shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Create Assignment</h5></div>
+        <div class="card-body">
+            <form id="createAssignmentForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small">Subject</label>
+                        <select id="subjectSelect" class="form-select form-select-sm" required>
+                            <option value="">Select...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small">Title</label>
+                        <input type="text" class="form-control form-control-sm" name="title" required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small">Description</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="2" required></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Due Date</label>
+                        <input type="date" class="form-control form-control-sm" name="due_date" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm">Publish Assignment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">My Assignments</h5></div>
+        <div class="card-body" id="assignmentsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Submissions Modal -->
+<div class="modal fade" id="submissionsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Student Submissions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="submissionsModalBody"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadSubjects() {
+    const res = await fetch("/teacher/api/subjects", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const select = document.getElementById("subjectSelect");
+    data.forEach(s => select.innerHTML += `<option value="${s.subject_id}">${s.subject_name} (Sem ${s.semester})</option>`);
+}
+
+async function loadAssignments() {
+    const res = await fetch("/teacher/api/assignments", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("assignmentsBody");
+
+    if(data.assignments.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-4">No assignments created yet.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Title</th><th>Subject</th><th>Due Date</th><th class="text-end">Submissions</th></tr></thead>
+        <tbody>`;
+
+    data.assignments.forEach(a => {
+        html += `<tr>
+            <td><b>${a.title}</b></td>
+            <td>${a.subject_name} (Sec ${a.section})</td>
+            <td>${new Date(a.due_date).toLocaleDateString()}</td>
+            <td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="viewSubmissions(${a.assignment_id})"><i class="bi bi-eye"></i> View</button></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+document.getElementById("createAssignmentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams(new FormData(e.target));
+    const res = await fetch("/teacher/api/assignments/create", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') },
+        body: formData
+    });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) { e.target.reset(); loadAssignments(); }
+});
+
+async function viewSubmissions(id) {
+    const res = await fetch(`/teacher/api/assignments/${id}/submissions`, { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("submissionsModalBody");
+
+    if(data.submissions.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center">No submissions yet.</p>';
+    } else {
+        let html = `<table class="table table-sm"><thead><tr><th>Student</th><th>Date</th><th>Marks</th></tr></thead><tbody>`;
+        data.submissions.forEach(s => {
+            html += `<tr><td>${s.student_name}</td><td>${new Date(s.submission_date).toLocaleString()}</td><td>${s.marks || 'Pending'}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        body.innerHTML = html;
+    }
+    new bootstrap.Modal(document.getElementById('submissionsModal')).show();
+}
+
+loadSubjects();
+loadAssignments();
+</script>
+{% endblock %}

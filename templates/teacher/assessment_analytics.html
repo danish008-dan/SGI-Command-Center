@@ -1,0 +1,50 @@
+<!-- templates/teacher/assessment_analytics.html -->
+{% extends "teacher/teacher_layout.html" %}
+{% block title %}Assessment Analytics{% endblock %}
+{% block page_title %}Assessment Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Subject-wise Performance</h5></div>
+        <div class="card-body" id="analyticsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/teacher/api/marks/analytics", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("analyticsBody");
+
+    if(data.analytics.length === 0) {
+        body.innerHTML = '<p class="text-center text-muted py-4">No assessment data available.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Subject</th><th>Assessment</th><th class="text-center">Students</th><th class="text-center">Max Marks</th><th class="text-center text-success">Highest</th><th class="text-center text-danger">Lowest</th><th class="text-center text-primary">Average</th></tr></thead>
+        <tbody>`;
+
+    data.analytics.forEach(a => {
+        html += `<tr>
+            <td><b>${a.subject_name}</b><br><small class="text-muted">${a.subject_code}</small></td>
+            <td><span class="badge bg-info">${a.exam_type}</span></td>
+            <td class="text-center">${a.total_students}</td>
+            <td class="text-center">${a.max_marks}</td>
+            <td class="text-center fw-bold text-success">${a.highest}</td>
+            <td class="text-center fw-bold text-danger">${a.lowest}</td>
+            <td class="text-center fw-bold text-primary">${a.average}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,167 @@
+<!-- templates/admin/subject_profile.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}{{ profile.subject_name }}{% endblock %}
+{% block page_title %}Subject: {{ profile.subject_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/subjects" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Directory
+            </a>
+            <div>
+                <h4 class="mb-0">{{ profile.subject_name }}</h4>
+                <small class="text-muted">Code: {{ profile.subject_code }} |
+                    Status: <span class="badge {% if profile.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ profile.status }}</span>
+                </small>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">
+            <i class="bi bi-person-badge me-1"></i> Assign / Change Teacher
+        </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Department</p>
+                <h6 class="cmd-stat-value text-primary">{{ profile.department_name or 'N/A' }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Semester</p>
+                <h6 class="cmd-stat-value">Semester {{ profile.semester }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Credits</p>
+                <h6 class="cmd-stat-value">{{ profile.credits }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Current Teacher</p>
+                <h6 class="cmd-stat-value text-info">{{ profile.teacher_name or 'N/A' }}</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#overview">Overview</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#curriculum">Curriculum</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">Assignment History</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Subject Information</h6>
+                    <div class="row">
+                        <div class="col-md-6"><p><strong>Subject Code:</strong> {{ profile.subject_code }}</p></div>
+                        <div class="col-md-6"><p><strong>Subject Name:</strong> {{ profile.subject_name }}</p></div>
+                        <div class="col-md-6"><p><strong>Department:</strong> {{ profile.department_name or 'N/A' }}</p></div>
+                        <div class="col-md-6"><p><strong>Current Teacher:</strong> {{ profile.teacher_name or 'N/A' }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Curriculum Tab -->
+        <div class="tab-pane fade" id="curriculum">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Curriculum Applicability</h6>
+                    <div class="row">
+                        <div class="col-md-6"><p><strong>Semester:</strong> {{ profile.semester }}</p></div>
+                        <div class="col-md-6"><p><strong>Credits:</strong> {{ profile.credits }}</p></div>
+                        <div class="col-md-6"><p><strong>Subject Type:</strong> {{ profile.subject_type }}</p></div>
+                        <div class="col-md-6"><p><strong>Classes/Week:</strong> {{ profile.classes_per_week }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment History Tab (NEW) -->
+        <div class="tab-pane fade" id="history">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Faculty Assignment History</h6></div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th>Teacher Name</th><th>From</th><th>To</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for h in history %}
+                            <tr>
+                                <td>{{ h.teacher_name }}</td>
+                                <td>{{ h.effective_from }}</td>
+                                <td>{{ h.effective_to or 'Present' }}</td>
+                                <td><span class="badge {% if h.assignment_status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">{{ h.assignment_status }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted">No assignment history</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Teacher Modal -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="assignForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign New Teacher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Teacher</label>
+                        <select class="form-select" name="new_teacher_id" required>
+                            <option value="">Select Teacher</option>
+                            {% for t in teachers %}
+                            <option value="{{ t.teacher_id }}">{{ t.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Effective From</label>
+                        <input type="date" class="form-control" name="effective_from" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Assign Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("assignForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const subjectId = "{{ profile.subject_id }}";
+
+    try {
+        const res = await fetch(`/admin/subjects/${subjectId}/assign`, { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); }
+    } catch (err) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Revaluation Requests{% endblock %}
+{% block page_title %}Revaluation Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Revaluation Requests</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Student</th><th>Semester</th><th>Subject</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in requests %}
+                        <tr>
+                            <td>{{ r.student_name }}</td>
+                            <td>{{ r.semester }}</td>
+                            <td>{{ r.subject_name }}</td>
+                            <td>{{ r.reason }}</td>
+                            <td><span class="badge bg-warning">{{ r.status }}</span></td>
+                            <td>
+                                {% if r.status == 'Pending' %}
+                                <button class="btn btn-sm btn-primary process-btn" data-id="{{ r.request_id }}">Process</button>
+                                {% else %}
+                                <span class="text-muted">Processed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No requests found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Modal -->
+<div class="modal fade" id="processModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="processForm">
+                <div class="modal-header"><h5 class="modal-title">Process Revaluation</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" name="request_id" id="req_id">
+                    <div class="mb-3">
+                        <label class="form-label">New Obtained Marks (After Rechecking)</label>
+                        <input type="number" class="form-control" name="new_marks" step="0.01" required>
+                    </div>
+                    <p class="text-muted small">This will update the marks, save old result in history, and move the result back to Draft for Principal re-approval.</p>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Update & Recalculate</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+const processModal = new bootstrap.Modal(document.getElementById('processModal'));
+document.querySelectorAll('.process-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('req_id').value = this.dataset.id;
+        processModal.show();
+    });
+});
+
+document.getElementById("processForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/revaluation/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(err) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!-- templates/principal/notice_approvals.html -->
+{% extends "principal/principal_layout.html" %}
+
+{% block title %}Notice Approvals{% endblock %}
+{% block page_title %}Pending Notice Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Approvals (Examination, Holiday, etc.)</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Title</th><th>Category</th><th>Creator</th><th>Created On</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for n in pending %}
+                        <tr>
+                            <td>{{ n.title }}</td>
+                            <td><span class="badge bg-info">{{ n.category }}</span></td>
+                            <td>{{ n.creator_name }}</td>
+                            <td>{{ n.posted_on }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success approve-btn" data-id="{{ n.notice_id }}">Approve</button>
+                                <button class="btn btn-sm btn-danger reject-btn" data-id="{{ n.notice_id }}">Reject</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No pending notices for approval.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function handleAction(btn, action) {
+    const id = btn.dataset.id;
+    let remarks = "";
+    if (action === "Rejected") {
+        remarks = prompt("Enter reason for rejection:");
+        if(!remarks) return;
+    }
+
+    if(!confirm(`Are you sure you want to ${action} this notice?`)) return;
+
+    const formData = new URLSearchParams();
+    formData.append("notice_id", id);
+    formData.append("action", action);
+    if(remarks) formData.append("remarks", remarks);
+
+    try {
+        const res = await fetch("/principal/api/notices/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+}
+
+document.querySelectorAll(".approve-btn").forEach(btn => {
+    btn.addEventListener("click", function() { handleAction(this, "Approved"); });
+});
+document.querySelectorAll(".reject-btn").forEach(btn => {
+    btn.addEventListener("click", function() { handleAction(this, "Rejected"); });
+});
+</script>
+{% endblock %}

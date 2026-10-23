@@ -1,0 +1,157 @@
+{% extends "student/student_layout.html" %}
+{% block title %}My Transport{% endblock %}
+{% block page_title %}Transport Allocation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/dashboard" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4" data-aos="fade-up">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 text-primary">Transport Service Preference</h5>
+            <p class="text-muted small mb-0">Turn this OFF if you commute independently. Turning it OFF does not cancel an existing transport assignment or associated obligations.</p>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="transportToggle" style="width: 3em; height: 1.5em;" disabled>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" id="transportContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="text-muted mt-2">Loading transport details...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+let currentTransportAllocation = null;
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+async function loadTransportData() {
+    const container = document.getElementById("transportContent");
+    try {
+        const res = await fetch("/student/api/transport", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+        if (!res.ok) throw new Error("Unable to load transport details.");
+
+        const data = await res.json();
+        currentTransportAllocation = data.allocation;
+        const isEnabled = data.service_enabled === true;
+
+        const toggle = document.getElementById("transportToggle");
+        toggle.checked = isEnabled;
+        toggle.disabled = false;
+
+        renderTransportUI();
+    } catch (error) {
+        container.innerHTML = `<div class="alert alert-danger">Unable to load transport details.</div>`;
+    }
+}
+
+function renderTransportUI() {
+    const container = document.getElementById("transportContent");
+    const isEnabled = document.getElementById("transportToggle").checked;
+
+    if (!isEnabled) {
+        if (currentTransportAllocation) {
+            container.innerHTML = `<div class="alert alert-warning">Your transport service preference is OFF. Your existing allocation remains active and is not cancelled.</div>`;
+        } else {
+            container.innerHTML = `<div class="alert alert-info text-center">Transport service is disabled in your preferences. Turn it on to view allocation details.</div>`;
+        }
+        return;
+    }
+
+    if (!currentTransportAllocation) {
+        container.innerHTML = `<div class="alert alert-info text-center">You do not have an active transport assignment.</div>`;
+        return;
+    }
+
+    const a = currentTransportAllocation;
+    const busNumber = a.bus_number || "Not assigned";
+    const pickupTime = a.pickup_time || "Not scheduled";
+
+    container.innerHTML = `
+        <div class="card shadow-sm" data-aos="fade-up">
+            <div class="card-header bg-white py-3"><h5 class="mb-0 text-primary">Current Transport Details</h5></div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted small">Bus Number</p>
+                        <h5 class="mb-4">${escapeHtml(busNumber)}</h5>
+                        <p class="mb-1 text-muted small">Route Name</p>
+                        <h5 class="mb-4">${escapeHtml(a.route_name || "N/A")}</h5>
+                        <p class="mb-1 text-muted small">Assigned Stop</p>
+                        <h5 class="mb-3">${escapeHtml(a.stop_name || "N/A")}</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted small">Pickup Timing</p>
+                        <h5 class="mb-4">${escapeHtml(pickupTime)}</h5>
+                        <p class="mb-1 text-muted small">Start Point</p>
+                        <h5 class="mb-4">${escapeHtml(a.start_point || "N/A")}</h5>
+                        <p class="mb-1 text-muted small">End Point</p>
+                        <h5 class="mb-3">${escapeHtml(a.end_point || "N/A")}</h5>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <span class="badge bg-success p-2 fs-6">Status: ${escapeHtml(a.status || "N/A")}</span>
+                    <small class="text-muted d-block mt-2">Effective From: ${escapeHtml(a.effective_from || "N/A")}</small>
+                </div>
+            </div>
+        </div>
+    `;
+    AOS.init();
+}
+
+document.getElementById("transportToggle").addEventListener("change", async function(e) {
+    const toggle = e.target;
+    const newEnabledState = toggle.checked;
+    toggle.disabled = true;
+
+    try {
+        const res = await fetch("/student/api/preferences/service", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem('access_token')
+            },
+            body: JSON.stringify({ service_type: "transport", enabled: newEnabledState })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            renderTransportUI();
+            showToast("Transport preference updated.", "success");
+        } else {
+            toggle.checked = !newEnabledState;
+            showToast(data.message || "Failed to update.", "danger");
+        }
+    } catch (err) {
+        toggle.checked = !newEnabledState;
+        showToast("Network error.", "danger");
+    } finally {
+        toggle.disabled = false;
+    }
+});
+
+function showToast(message, type) {
+    const div = document.createElement('div');
+    div.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    div.style.zIndex = 9999;
+    div.textContent = message;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+loadTransportData();
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Stock Requests{% endblock %}
+{% block page_title %}Stock Requests & Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Pending Stock Requests</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Requester</th><th>Item</th><th>Qty</th><th>Purpose</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in requests %}
+                        <tr>
+                            <td>{{ r.requester_name }} <small class="text-muted">({{ r.department_name or '-' }})</small></td>
+                            <td>{{ r.item_name }}</td>
+                            <td>{{ r.quantity }} {{ r.unit }}</td>
+                            <td>{{ r.purpose }}</td>
+                            <td><span class="badge bg-{% if r.status == 'Pending' %}warning{% elif r.status == 'Approved' %}info{% elif r.status == 'Issued' %}success{% else %}danger{% endif %}">{{ r.status }}</span></td>
+                            <td>
+                                {% if r.status == 'Pending' %}
+                                <button class="btn btn-sm btn-success approve-btn" data-id="{{ r.request_id }}">Approve</button>
+                                <button class="btn btn-sm btn-danger reject-btn" data-id="{{ r.request_id }}">Reject</button>
+                                {% elif r.status == 'Approved' %}
+                                <button class="btn btn-sm btn-primary issue-btn" data-id="{{ r.request_id }}">Issue Stock</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No stock requests.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+async function handleAction(btn, url) {
+    const id = btn.dataset.id;
+    const formData = new URLSearchParams();
+    formData.append("request_id", id);
+    
+    const res = await fetch(url, { method: "POST", body: formData });
+    const data = await res.json();
+    alert(data.message);
+    if(data.success) window.location.reload();
+}
+
+document.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', () => handleAction(btn, '/admin/api/stock-requests/process&action=Approved'.replace('&action=Approved','')) )); // Simplified for example
+
+// Better approach for process:
+document.querySelectorAll('.approve-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const formData = new URLSearchParams();
+        formData.append("request_id", id);
+        formData.append("action", "Approved");
+        const res = await fetch("/admin/api/stock-requests/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    });
+});
+
+document.querySelectorAll('.reject-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        if(!confirm("Reject this request?")) return;
+        const formData = new URLSearchParams();
+        formData.append("request_id", id);
+        formData.append("action", "Rejected");
+        const res = await fetch("/admin/api/stock-requests/process", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    });
+});
+
+document.querySelectorAll('.issue-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        if(!confirm("Issue stock for this request?")) return;
+        const formData = new URLSearchParams();
+        formData.append("request_id", id);
+        const res = await fetch("/admin/api/stock-requests/issue", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    });
+});
+</script>
+{% endblock %}

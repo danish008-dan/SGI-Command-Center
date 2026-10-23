@@ -1,0 +1,407 @@
+<!-- templates/principal/principal_layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Principal Panel{% endblock %} - SGI Command Center</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Main Project CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+
+    <style>
+        /* =========================================================
+           PRINCIPAL SIDEBAR
+           ========================================================= */
+
+        /* =========================================================
+           SIDEBAR BASE
+           ========================================================= */
+
+        /* Scrollbar Styling */
+
+        /* =========================================================
+           BRAND / LOGO
+           ========================================================= */
+
+        /* =========================================================
+           NAVIGATION
+           ========================================================= */
+
+        /* =========================================================
+           ICONS & LABEL
+           ========================================================= */
+
+        /* =========================================================
+           ACTIVE ITEM
+           ========================================================= */
+
+        /* =========================================================
+           DROPDOWN / COLLAPSE MENUS
+           ========================================================= */
+
+        /* =========================================================
+           COLLAPSED DESKTOP SIDEBAR
+           ========================================================= */
+
+        /* Hide submenus completely when collapsed */
+
+        /* Tooltip for collapsed state */
+
+        /* =========================================================
+           CONTENT & HEADER
+           ========================================================= */
+        .content {
+            min-width: 0;
+            width: 100%;
+            transition: width var(--principal-sidebar-transition), margin-left var(--principal-sidebar-transition);
+        }
+
+        /* =========================================================
+           MOBILE SIDEBAR
+           ========================================================= */
+        @media (max-width: 991px) {
+            .content { width: 100%; margin-left: 0 !important; }
+        }
+
+        @media (max-width: 576px) {
+            header { padding-left: 12px !important; padding-right: 12px !important; }
+            main { padding: 12px !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="wrapper d-flex align-items-stretch">
+
+    <!-- =========================================================
+         PRINCIPAL SIDEBAR
+         ========================================================= -->
+
+    <nav class="sidebar bg-dark text-white" id="sidebar">
+
+        <!-- Brand -->
+        <div class="principal-sidebar-brand">
+            <div class="principal-brand-content">
+                <h3 class="principal-brand-title">SGI CMS</h3>
+                <p class="principal-brand-subtitle">PRINCIPAL PANEL</p>
+            </div>
+            <div class="principal-collapsed-logo">SGI</div>
+        </div>
+
+        <!-- Navigation -->
+        <ul class="nav flex-column">
+
+            <!-- Executive Dashboard (Top Priority) -->
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/principal/dashboard" data-tooltip="Exec Dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span class="principal-nav-label">Executive Dashboard</span>
+                </a>
+            </li>
+
+            <!-- AI Assistant (Top Priority) -->
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/principal/ai-assistant" data-tooltip="AI Assistant">
+                    <i class="bi bi-robot"></i>
+                    <span class="principal-nav-label">AI Assistant</span>
+                </a>
+            </li>
+
+            <li class="my-2 border-top border-secondary opacity-25 mx-3"></li>
+
+            <!-- Oversight & Analytics Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#oversightMenu" role="button" aria-expanded="false" aria-controls="oversightMenu" data-tooltip="Oversight">
+                    <i class="bi bi-clipboard-data"></i>
+                    <span class="principal-nav-label">Oversight</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="oversightMenu">
+                    <ul class="submenu">
+                        <li class="nav-item"><a class="nav-link" href="/principal/academic"><i class="bi bi-graph-up"></i> Academic</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/finance"><i class="bi bi-cash-coin"></i> Finance</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/hr"><i class="bi bi-people"></i> HR & Payroll</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/campus"><i class="bi bi-building"></i> Campus Ops</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Approvals & Grievances Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#approvalsMenu" role="button" aria-expanded="false" aria-controls="approvalsMenu" data-tooltip="Approvals">
+                    <i class="bi bi-check2-square"></i>
+                    <span class="principal-nav-label">Approvals</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="approvalsMenu">
+                    <ul class="submenu">
+                        <li class="nav-item"><a class="nav-link" href="/principal/approvals"><i class="bi bi-clipboard-check"></i> Approval Center</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/notices"><i class="bi bi-megaphone"></i> Notices & Events</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/complaints"><i class="bi bi-shield-lock"></i> Sensitive Complaints</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Compliance & Reports Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#complianceMenu" role="button" aria-expanded="false" aria-controls="complianceMenu" data-tooltip="Compliance">
+                    <i class="bi bi-folder2-open"></i>
+                    <span class="principal-nav-label">Compliance</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="complianceMenu">
+                    <ul class="submenu">
+                        <li class="nav-item"><a class="nav-link" href="/principal/compliance"><i class="bi bi-folder-check"></i> Documents</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/meetings"><i class="bi bi-calendar-event"></i> Meetings</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/reports"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="my-2 border-top border-secondary opacity-25 mx-3"></li>
+
+            <!-- Personal & System Group -->
+            <li class="nav-item">
+                <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#accountMenu" role="button" aria-expanded="false" aria-controls="accountMenu" data-tooltip="My Account">
+                    <i class="bi bi-person-circle"></i>
+                    <span class="principal-nav-label">My Account</span>
+                    <i class="bi bi-chevron-right dropdown-arrow"></i>
+                </a>
+                <div class="collapse" id="accountMenu">
+                    <ul class="submenu">
+                        <li class="nav-item"><a class="nav-link" href="/principal/notifications"><i class="bi bi-bell"></i> Notifications</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/principal/audit"><i class="bi bi-clock-history"></i> My Activity</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/profile"><i class="bi bi-person-gear"></i> Profile</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Logout -->
+            <li class="nav-item">
+                <a class="nav-link text-danger" href="#" onclick="logout(); return false;" data-tooltip="Logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="principal-nav-label">Logout</span>
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+
+    <!-- SIDEBAR OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content flex-grow-1">
+        <header class="navbar navbar-light bg-white shadow-sm px-4 py-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button id="sidebarToggle" class="btn me-3" type="button" aria-label="Toggle sidebar" title="Toggle Sidebar">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                <h5 class="mb-0 text-primary-custom">{% block page_title %}Dashboard{% endblock %}</h5>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <div class="text-muted small fw-normal"><span id="navTime">--:--:--</span> | <span id="navDate">Loading...</span></div>
+                    <div class="fw-bold text-dark"><span id="navGreeting">Welcome</span>, <span id="navUserName">User</span></div>
+                </div>
+                <img id="navUserImg" src="/static/images/default.png" alt="Profile" class="rounded-circle border" width="40" height="40" style="object-fit: cover;">
+            </div>
+        </header>
+
+        <main class="p-4">{% block content %}{% endblock %}</main>
+    </div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+    AOS.init({ duration: 500, once: true });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("sidebarToggle");
+        const overlay = document.getElementById("sidebarOverlay");
+        if (!sidebar || !toggleBtn) return;
+
+        // Keep storage failures from breaking normal sidebar controls.
+        const safeGet = (key) => { try { return localStorage.getItem(key); } catch (_) { return null; } };
+        const safeSet = (key, value) => { try { localStorage.setItem(key, value); } catch (_) {} };
+
+        if (window.innerWidth > 991) {
+            if (safeGet("erpSidebarCollapsed") === "true") sidebar.classList.add("collapsed");
+        }
+
+        toggleBtn.addEventListener("click", function () {
+            if (window.innerWidth > 991) {
+                sidebar.classList.toggle("collapsed");
+                safeSet("erpSidebarCollapsed", sidebar.classList.contains("collapsed") ? "true" : "false");
+            } else {
+                sidebar.classList.toggle("show");
+                if (overlay) overlay.classList.toggle("show");
+            }
+        });
+
+        if (overlay) overlay.addEventListener("click", function () {
+            sidebar.classList.remove("show");
+            overlay.classList.remove("show");
+        });
+
+        window.addEventListener("resize", function () {
+            if (window.innerWidth > 991) {
+                sidebar.classList.remove("show");
+                if (overlay) overlay.classList.remove("show");
+                if (safeGet("erpSidebarCollapsed") === "true") sidebar.classList.add("collapsed");
+                else sidebar.classList.remove("collapsed");
+            }
+        });
+    });
+
+    function logout() {
+        try { localStorage.removeItem("access_token"); } catch (_) {}
+        window.location.href = "/login";
+    }
+
+    async function loadUserInfo() {
+        let token = null;
+        try { token = localStorage.getItem("access_token"); } catch (_) {}
+        if (!token) { window.location.href = "/login"; return; }
+
+        try {
+            const res = await fetch("/principal/api/me", { headers: { "Authorization": "Bearer " + token } });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById("navGreeting").textContent = data.greeting || "Welcome";
+                document.getElementById("navUserName").textContent = data.full_name || "User";
+                document.getElementById("navDate").textContent = data.current_date || "";
+                const userImg = document.getElementById("navUserImg");
+                if (userImg && data.profile_image) userImg.src = "/static/images/" + data.profile_image;
+            }
+        } catch (e) {
+            console.error("Unable to load Principal user information:", e);
+        }
+    }
+
+    function updateClock() {
+        const now = new Date();
+        let h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const s = String(now.getSeconds()).padStart(2, "0");
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12; h = h ? h : 12;
+        const el = document.getElementById("navTime");
+        if (el) el.textContent = `${h}:${m}:${s} ${ampm}`;
+    }
+
+    loadUserInfo();
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
+
+{% block custom_js %}{% endblock %}
+
+<script src="/static/js/sidebar.js" defer></script>
+
+<!-- Principal sidebar state persistence: dropdown + scroll position -->
+<script>
+(function () {
+    "use strict";
+
+    const OPEN_MENU_KEY = "principalSidebarOpenDropdown";
+    const SCROLL_KEY = "principalSidebarScrollTop";
+    const MENU_IDS = ["oversightMenu", "approvalsMenu", "complianceMenu", "accountMenu"];
+
+    function safeGet(key) {
+        try { return localStorage.getItem(key); } catch (_) { return null; }
+    }
+    function safeSet(key, value) {
+        try { localStorage.setItem(key, value); } catch (_) {}
+    }
+    function getSidebar() {
+        return document.getElementById("sidebar");
+    }
+    function saveScroll() {
+        const sidebar = getSidebar();
+        if (sidebar) safeSet(SCROLL_KEY, String(sidebar.scrollTop));
+    }
+    function setMenuExpanded(menuId, expanded) {
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        const trigger = document.querySelector('[aria-controls="' + menuId + '"]');
+        if (expanded) {
+            menu.classList.add("show");
+            if (trigger) trigger.setAttribute("aria-expanded", "true");
+        } else {
+            menu.classList.remove("show");
+            if (trigger) trigger.setAttribute("aria-expanded", "false");
+        }
+    }
+
+    // Save which submenu is open and maintain one-open-at-a-time behavior.
+    document.addEventListener("show.bs.collapse", function (event) {
+        if (!event.target || !MENU_IDS.includes(event.target.id)) return;
+        MENU_IDS.forEach(function (id) {
+            if (id !== event.target.id) {
+                const other = document.getElementById(id);
+                if (other && other.classList.contains("show")) {
+                    if (window.bootstrap && bootstrap.Collapse) {
+                        bootstrap.Collapse.getOrCreateInstance(other, { toggle: false }).hide();
+                    } else {
+                        setMenuExpanded(id, false);
+                    }
+                }
+            }
+        });
+        safeSet(OPEN_MENU_KEY, event.target.id);
+    });
+
+    document.addEventListener("hidden.bs.collapse", function (event) {
+        if (!event.target || !MENU_IDS.includes(event.target.id)) return;
+        if (safeGet(OPEN_MENU_KEY) === event.target.id) {
+            safeSet(OPEN_MENU_KEY, "");
+        }
+    });
+
+    // Capture submenu navigation before the browser reloads the next page.
+    document.addEventListener("click", function (event) {
+        const link = event.target.closest("#sidebar a[href]");
+        if (!link) return;
+        const href = link.getAttribute("href") || "";
+        if (!href || href === "#" || href.startsWith("javascript:")) return;
+        const submenu = link.closest(".collapse[id]");
+        if (submenu && MENU_IDS.includes(submenu.id)) safeSet(OPEN_MENU_KEY, submenu.id);
+        saveScroll();
+    }, true);
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = getSidebar();
+        if (!sidebar) return;
+
+        const savedMenu = safeGet(OPEN_MENU_KEY);
+        if (savedMenu && MENU_IDS.includes(savedMenu)) {
+            MENU_IDS.forEach(function (id) { setMenuExpanded(id, id === savedMenu); });
+        }
+
+        const savedScroll = Number(safeGet(SCROLL_KEY));
+        if (Number.isFinite(savedScroll) && savedScroll >= 0) sidebar.scrollTop = savedScroll;
+
+        sidebar.addEventListener("scroll", saveScroll, { passive: true });
+        window.addEventListener("pagehide", saveScroll);
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% extends "hod/hod_layout.html" %}
+{% block title %}Department Documents{% endblock %}
+{% block page_title %}Document Repository{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Department Documents</h5></div>
+        <div class="card-body" id="docsBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+async function loadData() {
+    const res = await fetch("/hod/api/documents", { headers: { "Authorization": "Bearer " + localStorage.getItem('access_token') } });
+    const data = await res.json();
+    const body = document.getElementById("docsBody");
+    if(data.documents.length === 0) { body.innerHTML = '<p class="text-muted text-center">No documents found.</p>'; return; }
+    let html = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Title</th><th>Status</th><th>Created At</th></tr></thead><tbody>`;
+    data.documents.forEach(d => {
+        html += `<tr><td><b>${d.title}</b></td><td><span class="badge bg-info">${d.status}</span></td><td>${new Date(d.created_at).toLocaleDateString()}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+loadData();
+</script>
+{% endblock %}

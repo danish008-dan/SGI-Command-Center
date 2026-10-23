@@ -1,0 +1,319 @@
+<!-- templates/admin/student_profile.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}{{ profile.full_name }}{% endblock %}
+{% block page_title %}Student: {{ profile.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/students" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Directory
+            </a>
+            <div>
+                <h4 class="mb-0">{{ profile.full_name }}</h4>
+                <small class="text-muted">Enrollment: {{ profile.enrollment_no }} |
+                    Status: <span class="badge {% if profile.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ profile.status }}</span>
+                </small>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#promoteModal">
+                <i class="bi bi-arrow-up-circle me-1"></i> Promote Semester
+            </button>
+            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#transferModal">
+                <i class="bi bi-shuffle me-1"></i> Transfer
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Department</p>
+                <h6 class="cmd-stat-value text-primary">{{ profile.department_name or 'N/A' }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Semester / Section</p>
+                <h6 class="cmd-stat-value">Sem {{ profile.semester }} - Sec {{ profile.section or 'N/A' }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">CGPA</p>
+                <h6 class="cmd-stat-value">{{ profile.cgpa or 'N/A' }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Overall Attendance</p>
+                <h6 class="cmd-stat-value {% if overall_attendance < 75 %}text-danger{% else %}text-success{% endif %}">{{ overall_attendance }}%</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#overview">Overview</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#personal">Personal</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fees">Fees</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#attendance">Attendance</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#results">Results</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">Enrollment History</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Student Summary</h6>
+                    <p><strong>Email:</strong> {{ profile.email }}</p>
+                    <p><strong>Mobile:</strong> {{ profile.mobile or 'N/A' }}</p>
+                    <hr>
+                    <h6>Fee Summary</h6>
+                    {% if fees and fees.payable_fee %}
+                        <p><strong>Total Payable:</strong> ₹{{ "{:,.0f}".format(fees.payable_fee|default(0)) }}</p>
+                        <p><strong>Paid:</strong> ₹{{ "{:,.0f}".format(fees.paid_amount|default(0)) }}</p>
+                        <p><strong>Balance:</strong> ₹{{ "{:,.0f}".format(fees.balance|default(0)) }}</p>
+                        <a href="/admin/fees" class="btn btn-sm btn-outline-primary mt-2">View Fee Details</a>
+                    {% else %}
+                        <p class="text-muted">No fee records found for this student.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Tab -->
+        <div class="tab-pane fade" id="personal">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Personal Information</h6>
+                    <div class="row">
+                        <div class="col-md-6"><p><strong>Full Name:</strong> {{ profile.full_name }}</p></div>
+                        <div class="col-md-6"><p><strong>Email:</strong> {{ profile.email }}</p></div>
+                        <div class="col-md-6"><p><strong>Mobile:</strong> {{ profile.mobile or 'N/A' }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fees Tab -->
+        <div class="tab-pane fade" id="fees">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Fee Details</h6></div>
+                <div class="card-body">
+                    {% if fees and fees.payable_fee %}
+                    <table class="table table-bordered">
+                        <tr><th>Total Fee</th><td>₹{{ "{:,.0f}".format(fees.payable_fee|default(0)) }}</td></tr>
+                        <tr><th>Paid Amount</th><td>₹{{ "{:,.0f}".format(fees.paid_amount|default(0)) }}</td></tr>
+                        <tr><th>Balance</th><td class="text-danger fw-bold">₹{{ "{:,.0f}".format(fees.balance|default(0)) }}</td></tr>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No fee records assigned.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Tab -->
+        <div class="tab-pane fade" id="attendance">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Subject-wise Attendance</h6></div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th>Subject</th><th>Total Classes</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
+                        <tbody>
+                            {% for a in attendance %}
+                            <tr>
+                                <td>{{ a.subject_name }}</td>
+                                <td>{{ a.total_classes }}</td>
+                                <td>{{ a.present }}</td>
+                                <td>{{ a.absent }}</td>
+                                <td class="fw-bold {% if a.percentage < 75 %}text-danger{% else %}text-success{% endif %}">{{ a.percentage }}%</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted">No attendance records</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div class="tab-pane fade" id="results">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white"><h6 class="mb-0">Semester Result</h6></div>
+                        <div class="card-body">
+                            {% if sem_result %}
+                            <p><strong>Semester:</strong> {{ sem_result.semester }}</p>
+                            <p><strong>Percentage:</strong> {{ sem_result.percentage }}%</p>
+                            <p><strong>SGPA:</strong> {{ sem_result.sgpa }}</p>
+                            <p><strong>Grade:</strong> {{ sem_result.grade }}</p>
+                            <p><strong>Status:</strong> <span class="badge bg-success">{{ sem_result.status }}</span></p>
+                            {% else %}
+                            <p class="text-muted">No published result.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white"><h6 class="mb-0">Subject Marks</h6></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light"><tr><th>Subject</th><th>Exam</th><th>Obtained</th><th>Max</th><th>%</th><th>Grade</th></tr></thead>
+                                <tbody>
+                                    {% for m in marks %}
+                                    <tr>
+                                        <td>{{ m.subject_name }}</td>
+                                        <td>{{ m.exam_type }}</td>
+                                        <td>{{ m.obtained_marks }}</td>
+                                        <td>{{ m.maximum_marks }}</td>
+                                        <td>{{ m.percentage }}%</td>
+                                        <td>{{ m.grade }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="6" class="text-center text-muted">No marks entered</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrollment History Tab (NEW) -->
+        <div class="tab-pane fade" id="history">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Enrollment & Lifecycle History</h6></div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th>Session</th><th>Department</th><th>Sem</th><th>Section</th><th>Status</th><th>From</th><th>To</th></tr></thead>
+                        <tbody>
+                            {% for h in history %}
+                            <tr>
+                                <td>{{ h.session_name or 'N/A' }}</td>
+                                <td>{{ h.department_name }}</td>
+                                <td>{{ h.semester }}</td>
+                                <td>{{ h.section or '-' }}</td>
+                                <td><span class="badge {% if h.enrollment_status == 'Active' %}bg-success{% elif h.enrollment_status == 'Promoted' %}bg-primary{% else %}bg-warning{% endif %}">{{ h.enrollment_status }}</span></td>
+                                <td>{{ h.effective_from }}</td>
+                                <td>{{ h.effective_to or 'Present' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="7" class="text-center text-muted">No history records</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Promote Modal -->
+<div class="modal fade" id="promoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="promoteForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Promote Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">New Academic Session</label>
+                        <select class="form-select" name="new_session_id" required>
+                            <option value="">Select Session</option>
+                            {% for s in sessions %}
+                            <option value="{{ s.academic_session_id }}">{{ s.session_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Semester</label>
+                        <input type="number" min="1" max="8" class="form-control" name="new_semester" value="{{ profile.semester + 1 }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Promote Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="transferForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transfer Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">New Department</label>
+                        <select class="form-select" name="new_department_id" required>
+                            <option value="">Select Department</option>
+                            {% for d in departments %}
+                            <option value="{{ d.department_id }}">{{ d.department_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Section</label>
+                        <input type="text" class="form-control" name="new_section" value="{{ profile.section or '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning">Transfer Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+// Promote Form Logic
+document.getElementById("promoteForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const studentId = "{{ profile.student_id }}";
+
+    try {
+        const res = await fetch(`/admin/students/${studentId}/promote`, { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); }
+    } catch (err) { alert("Network Error"); }
+});
+
+// Transfer Form Logic
+document.getElementById("transferForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const studentId = "{{ profile.student_id }}";
+
+    try {
+        const res = await fetch(`/admin/students/${studentId}/transfer`, { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); }
+    } catch (err) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

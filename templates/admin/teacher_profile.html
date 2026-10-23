@@ -1,0 +1,284 @@
+<!-- templates/admin/teacher_profile.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}{{ profile.full_name }}{% endblock %}
+{% block page_title %}Teacher: {{ profile.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/teachers" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Directory
+            </a>
+            <div>
+                <h4 class="mb-0">{{ profile.full_name }}</h4>
+                <small class="text-muted">{{ profile.designation }} |
+                    Status: <span class="badge {% if profile.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ profile.status }}</span>
+                </small>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#promoteModal">
+                <i class="bi bi-arrow-up-circle me-1"></i> Promote
+            </button>
+            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#transferModal">
+                <i class="bi bi-shuffle me-1"></i> Transfer
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Department</p>
+                <h6 class="cmd-stat-value text-primary">{{ profile.department_name or 'N/A' }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Designation</p>
+                <h6 class="cmd-stat-value">{{ profile.designation }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Subjects Assigned</p>
+                <h6 class="cmd-stat-value">{{ subjects|length }}</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Leaves</p>
+                <h6 class="cmd-stat-value">{{ leaves|length }}</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#overview">Overview</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#personal">Personal</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#employment">Employment</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#subjects">Subjects & Leave</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">Service History</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Summary</h6>
+                    <p><strong>Email:</strong> {{ profile.email }}</p>
+                    <p><strong>Mobile:</strong> {{ profile.mobile or 'N/A' }}</p>
+                    <p><strong>Experience:</strong> {{ profile.experience }} Years</p>
+                    <p><strong>Qualification:</strong> {{ profile.qualification or 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Tab -->
+        <div class="tab-pane fade" id="personal">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Personal Information</h6>
+                    <div class="row">
+                        <div class="col-md-6"><p><strong>Full Name:</strong> {{ profile.full_name }}</p></div>
+                        <div class="col-md-6"><p><strong>Email:</strong> {{ profile.email }}</p></div>
+                        <div class="col-md-6"><p><strong>Mobile:</strong> {{ profile.mobile or 'N/A' }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Tab -->
+        <div class="tab-pane fade" id="employment">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Employment Details</h6>
+                    <div class="row">
+                        <div class="col-md-6"><p><strong>Department:</strong> {{ profile.department_name or 'N/A' }}</p></div>
+                        <div class="col-md-6"><p><strong>Designation:</strong> {{ profile.designation }}</p></div>
+                        <div class="col-md-6"><p><strong>Qualification:</strong> {{ profile.qualification or 'N/A' }}</p></div>
+                        <div class="col-md-6"><p><strong>Experience:</strong> {{ profile.experience }} Years</p></div>
+                        <div class="col-md-6"><p><strong>Joining Date:</strong> <span class="text-muted">Unavailable (Requires HR Module)</span></p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects & Leave Tab -->
+        <div class="tab-pane fade" id="subjects">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white"><h6 class="mb-0">Subjects Assigned</h6></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light"><tr><th>Code</th><th>Name</th><th>Sem</th></tr></thead>
+                                <tbody>
+                                    {% for s in subjects %}
+                                    <tr>
+                                        <td>{{ s.subject_code }}</td>
+                                        <td>{{ s.subject_name }}</td>
+                                        <td>{{ s.semester }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center text-muted">No subjects assigned</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white"><h6 class="mb-0">Leave History</h6></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light"><tr><th>Type</th><th>From</th><th>To</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    {% for l in leaves %}
+                                    <tr>
+                                        <td>{{ l.leave_type }}</td>
+                                        <td>{{ l.from_date }}</td>
+                                        <td>{{ l.to_date }}</td>
+                                        <td><span class="badge {% if l.status == 'Approved' %}bg-success{% elif l.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">{{ l.status }}</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="4" class="text-center text-muted">No leave records</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service History Tab (NEW) -->
+        <div class="tab-pane fade" id="history">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Employment & Service History</h6></div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th>Department</th><th>Designation</th><th>Status</th><th>From</th><th>To</th></tr></thead>
+                        <tbody>
+                            {% for h in history %}
+                            <tr>
+                                <td>{{ h.department_name }}</td>
+                                <td>{{ h.designation }}</td>
+                                <td><span class="badge {% if h.service_status == 'Active' %}bg-success{% elif h.service_status == 'Promoted' %}bg-primary{% else %}bg-warning{% endif %}">{{ h.service_status }}</span></td>
+                                <td>{{ h.effective_from }}</td>
+                                <td>{{ h.effective_to or 'Present' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted">No history records</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Promote Modal -->
+<div class="modal fade" id="promoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="promoteForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Promote Teacher (Change Designation)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">New Designation</label>
+                        <select class="form-select" name="new_designation" required>
+                            <option value="Assistant Professor">Assistant Professor</option>
+                            <option value="Associate Professor">Associate Professor</option>
+                            <option value="Professor">Professor</option>
+                            <option value="Lecturer">Lecturer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Effective From</label>
+                        <input type="date" class="form-control" name="effective_from" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Promote Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="transferForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transfer Teacher (Change Department)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">New Department</label>
+                        <select class="form-select" name="new_department_id" required>
+                            <option value="">Select Department</option>
+                            {% for d in departments %}
+                            <option value="{{ d.department_id }}">{{ d.department_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Effective From</label>
+                        <input type="date" class="form-control" name="effective_from" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning">Transfer Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+// Promote Form Logic
+document.getElementById("promoteForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const teacherId = "{{ profile.teacher_id }}";
+
+    try {
+        const res = await fetch(`/admin/teachers/${teacherId}/promote`, { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); }
+    } catch (err) { alert("Network Error"); }
+});
+
+// Transfer Form Logic
+document.getElementById("transferForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const teacherId = "{{ profile.teacher_id }}";
+
+    try {
+        const res = await fetch(`/admin/teachers/${teacherId}/transfer`, { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); window.location.reload(); }
+        else { alert(data.message); }
+    } catch (err) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

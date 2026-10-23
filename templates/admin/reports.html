@@ -1,0 +1,121 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Reports & Analytics{% endblock %}
+{% block page_title %}ERP Reports Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Analytics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3" data-aos="zoom-in">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white">
+                <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Total Students</p><h2 class="mb-0">{{ analytics.total_students }}</h2></div><i class="bi bi-mortarboard-fill fs-1 opacity-50"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3" data-aos="zoom-in" data-aos-delay="100">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white">
+                <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Total Faculty</p><h2 class="mb-0">{{ analytics.total_teachers }}</h2></div><i class="bi bi-person-badge-fill fs-1 opacity-50"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3" data-aos="zoom-in" data-aos-delay="200">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white">
+                <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Fees Collected</p><h2 class="mb-0">₹{{ "%.0f"|format(analytics.fees_collected) }}</h2></div><i class="bi bi-cash-stack fs-1 opacity-50"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3" data-aos="zoom-in" data-aos-delay="300">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white">
+                <div class="d-flex justify-content-between"><div><p class="mb-1 opacity-75">Pending Complaints</p><h2 class="mb-0">{{ analytics.pending_complaints }}</h2></div><i class="bi bi-exclamation-octagon-fill fs-1 opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Workspace -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0"><i class="bi bi-grid-3x3-gap-fill"></i> Reports Workspace</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Student Reports -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-mortarboard-fill text-primary fs-1"></i>
+                            <h5 class="mt-2">Student Reports</h5>
+                            <p class="text-muted small">Master List, Enrollment, Strength</p>
+                            <a href="/admin/reports/students/preview" class="btn btn-sm btn-outline-primary">View Reports</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty Reports -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-person-badge-fill text-success fs-1"></i>
+                            <h5 class="mt-2">Faculty Reports</h5>
+                            <p class="text-muted small">Directory, Qualification, Leave</p>
+                            <a href="/admin/reports/faculty/preview" class="btn btn-sm btn-outline-success">View Reports</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Reports -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-journal-bookmark-fill text-warning fs-1"></i>
+                            <h5 class="mt-2">Academic Reports</h5>
+                            <p class="text-muted small">Attendance, Results, Performance</p>
+                            <a href="/admin/reports/attendance/preview" class="btn btn-sm btn-outline-warning">Low Attendance Report</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finance Reports -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-cash-coin text-info fs-1"></i>
+                            <h5 class="mt-2">Finance Reports</h5>
+                            <p class="text-muted small">Fee Collection, Outstanding</p>
+                            <div class="d-flex flex-column gap-1">
+                                <a href="/admin/reports/finance/collection/preview" class="btn btn-sm btn-outline-info">Fee Collection</a>
+                                <a href="/admin/reports/finance/outstanding/preview" class="btn btn-sm btn-outline-info">Outstanding Fees</a>
+                                <a href="/admin/reports/fees/csv" class="btn btn-sm btn-outline-info">Pending Fees CSV</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Administration Reports -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clipboard-data text-danger fs-1"></i>
+                            <h5 class="mt-2">Administration</h5>
+                            <p class="text-muted small">Complaints, Notices, Events</p>
+                            <a href="/admin/complaints" class="btn btn-sm btn-outline-danger">View Complaints</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Reports -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-shield-lock text-secondary fs-1"></i>
+                            <h5 class="mt-2">Audit Reports</h5>
+                            <p class="text-muted small">Login History, Activity Logs</p>
+                            <div class="d-flex flex-column gap-1">
+                                <a href="/admin/reports/audit/login/preview" class="btn btn-sm btn-outline-secondary">Login History</a>
+                                <a href="/admin/reports/audit/activity/preview" class="btn btn-sm btn-outline-secondary">Activity Logs</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

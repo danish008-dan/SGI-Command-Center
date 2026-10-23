@@ -1,0 +1,107 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Employee Directory{% endblock %}
+{% block page_title %}Employee Directory{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Non-Teaching Staff</h5>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEmpModal">
+                <i class="bi bi-person-plus me-1"></i> Add Employee
+            </button>
+        </div>
+        <div class="card-body">
+            <form method="get" action="/admin/hr/employees" class="row g-2 mb-3 align-items-end">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="search" placeholder="Search name, code, email..." value="{{ filters.search or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="department_id" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for d in departments %}<option value="{{ d.department_id }}" {% if filters.department_id == d.department_id %}selected{% endif %}>{{ d.department_name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+                    <a href="/admin/hr/employees" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Emp Code</th><th>Name</th><th>Designation</th><th>Dept</th><th>Type</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for e in employees %}
+                        <tr>
+                            <td class="fw-bold">{{ e.employee_code }}</td>
+                            <td>{{ e.full_name }}<br><small class="text-muted">{{ e.email }}</small></td>
+                            <td>{{ e.designation }}</td>
+                            <td>{{ e.department_name or '-' }}</td>
+                            <td><span class="badge bg-info">{{ e.employment_type }}</span></td>
+                            <td><span class="badge bg-{% if e.status == 'Active' %}success{% else %}danger{% endif %}">{{ e.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No employees found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="empForm">
+                <div class="modal-header"><h5 class="modal-title">Add New Employee</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Full Name *</label><input type="text" class="form-control" name="name" required></div>
+                        <div class="col-md-6"><label class="form-label">Email *</label><input type="email" class="form-control" name="email" required></div>
+                        <div class="col-md-6"><label class="form-label">Mobile</label><input type="text" class="form-control" name="mobile"></div>
+                        <div class="col-md-6"><label class="form-label">Password *</label><input type="password" class="form-control" name="password" required></div>
+                        <div class="col-md-6"><label class="form-label">Designation *</label><input type="text" class="form-control" name="designation" required></div>
+                        <div class="col-md-6"><label class="form-label">Department</label>
+                            <select class="form-select" name="department_id">
+                                <option value="">None</option>
+                                {% for d in departments %}<option value="{{ d.department_id }}">{{ d.department_name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">Employment Type</label>
+                            <select class="form-select" name="employment_type">
+                                <option>Permanent</option><option>Contractual</option>
+                                <option>Temporary</option><option selected>Probationary</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">Joining Date *</label><input type="date" class="form-control" name="joining_date" required></div>
+                        <div class="col-md-4"></div>
+                        <div class="col-md-6"><label class="form-label">Bank Account No.</label><input type="text" class="form-control" name="bank_account"></div>
+                        <div class="col-md-6"><label class="form-label">Bank IFSC</label><input type="text" class="form-control" name="bank_ifsc"></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Employee</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.getElementById("empForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+        const res = await fetch("/admin/api/hr/employees/add", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if(data.success) window.location.reload();
+    } catch(e) { alert("Network Error"); }
+});
+</script>
+{% endblock %}

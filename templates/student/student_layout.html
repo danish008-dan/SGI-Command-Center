@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Student Panel{% endblock %} - SGI Command Center</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Main Project CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+
+
+    <style>
+
+
+        /* =========================================================
+           STUDENT SIDEBAR
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           SIDEBAR BASE
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           SIDEBAR BRAND
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* =========================================================
+           COLLAPSED LOGO
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           NAVIGATION
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* =========================================================
+           NAV ICONS
+           ========================================================= */
+
+
+
+
+
+
+
+        /* =========================================================
+           NAV LABEL
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           CATEGORY HEADERS
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           ACTIVE ITEM
+           ========================================================= */
+
+
+
+
+
+
+
+        /* =========================================================
+           COLLAPSED DESKTOP SIDEBAR
+           ========================================================= */
+
+
+
+
+        /* Hide expanded brand */
+
+
+
+
+        /* Show collapsed logo */
+
+
+
+
+
+
+
+        /* =========================================================
+           COLLAPSED CATEGORY
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           COLLAPSED NAV LINKS
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           COLLAPSED ICONS
+           ========================================================= */
+
+
+
+
+        /* Hide labels */
+
+
+
+
+        /* Active indicator */
+
+
+
+
+        /* Hover */
+
+
+
+
+        /* =========================================================
+           COLLAPSED TOOLTIP
+           ========================================================= */
+
+
+
+
+
+
+
+        /* =========================================================
+           CONTENT
+           ========================================================= */
+
+        .content {
+
+            min-width: 0;
+
+            width: 100%;
+
+            transition:
+                width var(--student-sidebar-transition),
+                margin-left var(--student-sidebar-transition);
+        }
+
+
+        /* =========================================================
+           TOGGLE BUTTON
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+        /* =========================================================
+           OVERLAY
+           ========================================================= */
+
+
+
+
+        /* =========================================================
+           MOBILE
+           ========================================================= */
+
+        @media (max-width: 991px) {
+
+
+
+
+
+
+
+
+            /*
+             * Mobile should behave as a drawer,
+             * not as the desktop collapsed rail.
+             */
+
+
+
+
+
+
+
+            /* Restore full brand */
+
+
+
+
+
+
+
+
+
+
+            /* Restore categories */
+
+
+
+
+            /* Restore normal links */
+
+
+
+
+            /* Restore mobile icons */
+
+
+
+
+
+
+
+            /* Disable desktop tooltip */
+
+
+
+
+            /* =====================================================
+               MOBILE OVERLAY
+               ===================================================== */
+
+
+
+
+
+
+
+            .content {
+
+                width: 100%;
+
+                margin-left: 0 !important;
+            }
+
+}
+
+
+        /* =========================================================
+           SMALL MOBILE
+           ========================================================= */
+
+        @media (max-width: 576px) {
+
+
+
+
+
+
+
+
+            header {
+
+                padding-left: 12px !important;
+
+                padding-right: 12px !important;
+            }
+
+
+            main {
+
+                padding: 12px !important;
+            }
+
+}
+
+
+        /* =========================================================
+           SCROLLABLE NAV + COLLAPSIBLE MENU GROUPS
+           ========================================================= */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* In icon-only mode, hide submenu rows and the chevron.
+           Clicking a group expands the desktop sidebar first. */
+
+
+
+
+
+
+
+
+
+
+
+</style>
+</head>
+
+
+<body class="bg-light">
+
+<div class="wrapper d-flex align-items-stretch">
+
+
+    <!-- =========================================================
+         STUDENT SIDEBAR
+         ========================================================= -->
+
+    <nav
+        class="sidebar bg-dark text-white"
+        id="sidebar"
+    >
+
+        <!-- =====================================================
+             BRAND
+             ===================================================== -->
+
+        <div class="student-sidebar-brand">
+
+            <!-- Expanded Logo -->
+
+            <div class="student-brand-content">
+
+                <h3 class="student-brand-title">
+                    SGI CMS
+                </h3>
+
+                <p class="student-brand-subtitle">
+                    STUDENT PANEL
+                </p>
+
+            </div>
+
+
+            <!-- Collapsed Logo -->
+
+            <div class="student-collapsed-logo">
+                SGI
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             NAVIGATION
+             ===================================================== -->
+
+        <ul class="nav flex-column student-sidebar-nav" aria-label="Student navigation">
+
+            <!-- 1. Dashboard: always visible at the top -->
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/student/dashboard" data-tooltip="Dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span class="student-nav-label">Dashboard</span>
+                </a>
+            </li>
+
+            <!-- 2. JARVIS AI: primary AI assistant -->
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/student/jarvis" data-tooltip="JARVIS AI">
+                    <i class="bi bi-robot"></i>
+                    <span class="student-nav-label">JARVIS AI</span>
+                </a>
+            </li>
+
+            <!-- 3. AI-powered career and placement features -->
+            <li class="student-sidebar-category">AI & Career Tools</li>
+            <li class="nav-item student-nav-group">
+                <button class="nav-link student-nav-group-toggle" type="button"
+                        data-menu-target="careerToolsMenu" aria-expanded="false"
+                        aria-controls="careerToolsMenu" data-tooltip="AI & Career Tools">
+                    <i class="bi bi-stars"></i>
+                    <span class="student-nav-label">AI & Career Tools</span>
+                    <i class="bi bi-chevron-down student-nav-chevron"></i>
+                </button>
+                <ul class="student-submenu" id="careerToolsMenu" hidden>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/career" data-tooltip="Career Counsellor">
+                            <i class="bi bi-compass"></i>
+                            <span class="student-nav-label">Career Counsellor</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/placement" data-tooltip="Placement Cell">
+                            <i class="bi bi-briefcase"></i>
+                            <span class="student-nav-label">Placement Cell</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/resume-builder" data-tooltip="Resume Builder">
+                            <i class="bi bi-file-earmark-person"></i>
+                            <span class="student-nav-label">Resume Builder</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/placement" data-tooltip="Resume Analyzer">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            <span class="student-nav-label">Resume Analyzer</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- 4. Academic features -->
+            <li class="student-sidebar-category">Academics</li>
+            <li class="nav-item student-nav-group">
+                <button class="nav-link student-nav-group-toggle" type="button"
+                        data-menu-target="academicsMenu" aria-expanded="false"
+                        aria-controls="academicsMenu" data-tooltip="Academics">
+                    <i class="bi bi-mortarboard"></i>
+                    <span class="student-nav-label">Academics</span>
+                    <i class="bi bi-chevron-down student-nav-chevron"></i>
+                </button>
+                <ul class="student-submenu" id="academicsMenu" hidden>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/learning-center" data-tooltip="Learning Center">
+                            <i class="bi bi-book-half"></i>
+                            <span class="student-nav-label">Learning Center</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/assignments" data-tooltip="Assignments">
+                            <i class="bi bi-journal-text"></i>
+                            <span class="student-nav-label">Assignments</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/materials" data-tooltip="Learning Materials">
+                            <i class="bi bi-folder2-open"></i>
+                            <span class="student-nav-label">Learning Materials</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/attendance" data-tooltip="Attendance">
+                            <i class="bi bi-calendar-check"></i>
+                            <span class="student-nav-label">Attendance</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/marks" data-tooltip="View Marks">
+                            <i class="bi bi-journal-check"></i>
+                            <span class="student-nav-label">View Marks</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/result" data-tooltip="Semester Result">
+                            <i class="bi bi-award"></i>
+                            <span class="student-nav-label">Semester Result</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/timetable" data-tooltip="My Timetable">
+                            <i class="bi bi-calendar-week"></i>
+                            <span class="student-nav-label">My Timetable</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- 5. Day-to-day campus services -->
+            <li class="student-sidebar-category">Campus</li>
+            <li class="nav-item student-nav-group">
+                <button class="nav-link student-nav-group-toggle" type="button"
+                        data-menu-target="campusMenu" aria-expanded="false"
+                        aria-controls="campusMenu" data-tooltip="Campus Services">
+                    <i class="bi bi-buildings"></i>
+                    <span class="student-nav-label">Campus Services</span>
+                    <i class="bi bi-chevron-down student-nav-chevron"></i>
+                </button>
+                <ul class="student-submenu" id="campusMenu" hidden>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/fees" data-tooltip="Fee Status">
+                            <i class="bi bi-cash-coin"></i>
+                            <span class="student-nav-label">Fee Status</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/library" data-tooltip="My Library">
+                            <i class="bi bi-book"></i>
+                            <span class="student-nav-label">My Library</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/hostel" data-tooltip="My Hostel">
+                            <i class="bi bi-building"></i>
+                            <span class="student-nav-label">My Hostel</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/transport" data-tooltip="My Transport">
+                            <i class="bi bi-bus-front"></i>
+                            <span class="student-nav-label">My Transport</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/notices" data-tooltip="Notices & Events">
+                            <i class="bi bi-megaphone"></i>
+                            <span class="student-nav-label">Notices & Events</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/student/complaints" data-tooltip="Complaints">
+                            <i class="bi bi-exclamation-octagon"></i>
+                            <span class="student-nav-label">Complaints</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- 6. Account actions -->
+            <li class="student-sidebar-category">Account</li>
+            <li class="nav-item student-nav-group">
+                <button class="nav-link student-nav-group-toggle" type="button"
+                        data-menu-target="accountMenu" aria-expanded="false"
+                        aria-controls="accountMenu" data-tooltip="Account">
+                    <i class="bi bi-person-circle"></i>
+                    <span class="student-nav-label">Account</span>
+                    <i class="bi bi-chevron-down student-nav-chevron"></i>
+                </button>
+                <ul class="student-submenu" id="accountMenu" hidden>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/profile" data-tooltip="My Profile">
+                            <i class="bi bi-person-gear"></i>
+                            <span class="student-nav-label">My Profile</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="#" onclick="logout(); return false;" data-tooltip="Logout">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span class="student-nav-label">Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+        </ul>
+
+    </nav>
+
+
+    <!-- =========================================================
+         SIDEBAR OVERLAY
+         ========================================================= -->
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+         ========================================================= -->
+
+    <div class="content flex-grow-1">
+
+
+        <!-- =====================================================
+             HEADER
+             ===================================================== -->
+
+        <header
+            class="navbar navbar-light bg-white shadow-sm px-4 py-3 d-flex justify-content-between align-items-center"
+        >
+
+            <!-- Left Header -->
+
+            <div class="d-flex align-items-center">
+
+                <button
+                    id="sidebarToggle"
+                    class="btn me-3"
+                    type="button"
+                    aria-label="Toggle sidebar"
+                    title="Toggle Sidebar"
+                >
+
+                    <i class="bi bi-list fs-4"></i>
+
+                </button>
+
+
+                <h5 class="mb-0 text-primary-custom">
+
+                    {% block page_title %}
+                        Dashboard
+                    {% endblock %}
+
+                </h5>
+
+            </div>
+
+
+            <!-- Right Header -->
+
+            <div class="d-flex align-items-center gap-3">
+
+                <div class="text-end d-none d-md-block">
+
+                    <div class="text-muted small fw-normal">
+
+                        <span id="navTime">
+                            --:--:--
+                        </span>
+
+                        |
+
+                        <span id="navDate">
+                            Loading...
+                        </span>
+
+                    </div>
+
+
+                    <div class="fw-bold text-dark">
+
+                        <span id="navGreeting">
+                            Welcome
+                        </span>,
+
+                        <span id="navUserName">
+                            User
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <img
+                    id="navUserImg"
+                    src="/static/images/default.png"
+                    alt="Profile"
+                    class="rounded-circle border"
+                    width="40"
+                    height="40"
+                    style="object-fit: cover;"
+                >
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+             PAGE CONTENT
+             ===================================================== -->
+
+        <main class="p-4">
+
+            {% block content %}{% endblock %}
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     BOOTSTRAP
+     ========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<!-- =========================================================
+     AOS
+     ========================================================= -->
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+
+<script>
+
+    /* =========================================================
+       AOS INITIALIZATION
+       ========================================================= */
+
+    AOS.init({
+        duration: 500,
+        once: true
+    });
+
+
+    /* =========================================================
+       SIDEBAR
+       ========================================================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const sidebar =
+                document.getElementById("sidebar");
+
+            const toggleBtn =
+                document.getElementById("sidebarToggle");
+
+            const overlay =
+                document.getElementById("sidebarOverlay");
+
+
+            if (!sidebar || !toggleBtn) {
+                return;
+            }
+
+
+            /* =================================================
+               RESTORE DESKTOP SIDEBAR STATE
+               ================================================= */
+
+            if (window.innerWidth > 991) {
+
+                const savedState =
+                    localStorage.getItem(
+                        "erpSidebarCollapsed"
+                    );
+
+
+                if (savedState === "true") {
+
+                    sidebar.classList.add(
+                        "collapsed"
+                    );
+
+                }
+
+            }
+
+
+            /* =================================================
+               TOGGLE
+               ================================================= */
+
+            toggleBtn.addEventListener(
+                "click",
+                function () {
+
+                    /* -----------------------------------------
+                       DESKTOP
+                       ----------------------------------------- */
+
+                    if (window.innerWidth > 991) {
+
+                        sidebar.classList.toggle(
+                            "collapsed"
+                        );
+
+
+                        const isCollapsed =
+                            sidebar.classList.contains(
+                                "collapsed"
+                            );
+
+
+                        localStorage.setItem(
+                            "erpSidebarCollapsed",
+                            isCollapsed
+                                ? "true"
+                                : "false"
+                        );
+
+                    }
+
+
+                    /* -----------------------------------------
+                       MOBILE
+                       ----------------------------------------- */
+
+                    else {
+
+                        sidebar.classList.toggle(
+                            "show"
+                        );
+
+
+                        if (overlay) {
+
+                            overlay.classList.toggle(
+                                "show"
+                            );
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            /* =================================================
+               OVERLAY CLICK
+               ================================================= */
+
+            if (overlay) {
+
+                overlay.addEventListener(
+                    "click",
+                    function () {
+
+                        sidebar.classList.remove(
+                            "show"
+                        );
+
+                        overlay.classList.remove(
+                            "show"
+                        );
+
+                    }
+                );
+
+            }
+
+
+            /* =================================================
+               RESIZE
+               ================================================= */
+
+            window.addEventListener(
+                "resize",
+                function () {
+
+                    if (window.innerWidth > 991) {
+
+                        sidebar.classList.remove(
+                            "show"
+                        );
+
+
+                        if (overlay) {
+
+                            overlay.classList.remove(
+                                "show"
+                            );
+
+                        }
+
+
+                        const savedState =
+                            localStorage.getItem(
+                                "erpSidebarCollapsed"
+                            );
+
+
+                        if (savedState === "true") {
+
+                            sidebar.classList.add(
+                                "collapsed"
+                            );
+
+                        }
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    /* =========================================================
+       SIDEBAR DROPDOWN MENUS
+       ========================================================= */
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("sidebar");
+        const menuButtons = document.querySelectorAll(".student-nav-group-toggle");
+
+        function closeMenu(button) {
+            const menuId = button.getAttribute("data-menu-target");
+            const menu = document.getElementById(menuId);
+            button.setAttribute("aria-expanded", "false");
+            if (menu) menu.hidden = true;
+        }
+
+        function openMenu(button) {
+            const menuId = button.getAttribute("data-menu-target");
+            const menu = document.getElementById(menuId);
+            button.setAttribute("aria-expanded", "true");
+            if (menu) menu.hidden = false;
+        }
+
+        menuButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                /* On desktop, open the full sidebar before showing a submenu. */
+                if (window.innerWidth > 991 && sidebar && sidebar.classList.contains("collapsed")) {
+                    sidebar.classList.remove("collapsed");
+                    localStorage.setItem("erpSidebarCollapsed", "false");
+                }
+
+                const menuId = button.getAttribute("data-menu-target");
+                const menu = document.getElementById(menuId);
+                const isOpen = button.getAttribute("aria-expanded") === "true";
+
+                /* Keep the navigation tidy: only one group stays open at a time. */
+                menuButtons.forEach(function (otherButton) {
+                    if (otherButton !== button) closeMenu(otherButton);
+                });
+
+                if (isOpen) {
+                    closeMenu(button);
+                } else if (menu) {
+                    openMenu(button);
+                }
+            });
+        });
+
+        /* Highlight the current page and open its containing dropdown. */
+        const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+        document.querySelectorAll("#sidebar a.nav-link[href]").forEach(function (link) {
+            const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/+$/, "") || "/";
+            if (linkPath === currentPath && link.getAttribute("href") !== "#") {
+                link.classList.add("active");
+                const parentMenu = link.closest(".student-submenu");
+                if (parentMenu) {
+                    const parentButton = document.querySelector(
+                        '[data-menu-target="' + parentMenu.id + '"]'
+                    );
+                    if (parentButton) openMenu(parentButton);
+                }
+            }
+        });
+    });
+
+    /* =========================================================
+       LOGOUT
+       ========================================================= */
+
+    function logout() {
+
+        localStorage.removeItem(
+            "access_token"
+        );
+
+        window.location.href =
+            "/login";
+
+    }
+
+
+    /* =========================================================
+       USER INFORMATION
+       ========================================================= */
+
+    async function loadUserInfo() {
+
+        const token =
+            localStorage.getItem(
+                "access_token"
+            );
+
+
+        if (!token) {
+
+            window.location.href =
+                "/login";
+
+            return;
+
+        }
+
+
+        try {
+
+            const res =
+                await fetch(
+                    "/student/api/me",
+                    {
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            if (res.ok) {
+
+                const data =
+                    await res.json();
+
+
+                const greeting =
+                    document.getElementById(
+                        "navGreeting"
+                    );
+
+
+                const userName =
+                    document.getElementById(
+                        "navUserName"
+                    );
+
+
+                const date =
+                    document.getElementById(
+                        "navDate"
+                    );
+
+
+                const userImg =
+                    document.getElementById(
+                        "navUserImg"
+                    );
+
+
+                if (greeting) {
+
+                    greeting.textContent =
+                        data.greeting ||
+                        "Welcome";
+
+                }
+
+
+                if (userName) {
+
+                    userName.textContent =
+                        data.full_name ||
+                        "User";
+
+                }
+
+
+                if (date) {
+
+                    date.textContent =
+                        data.current_date ||
+                        "";
+
+                }
+
+
+                if (
+                    userImg &&
+                    data.profile_image
+                ) {
+
+                    userImg.src =
+                        "/static/images/" +
+                        data.profile_image;
+
+                }
+
+            }
+
+        } catch (e) {
+
+            console.error(
+                "Unable to load Student user information:",
+                e
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       CLOCK
+       ========================================================= */
+
+    function updateClock() {
+
+        const now =
+            new Date();
+
+
+        let h =
+            now.getHours();
+
+
+        const m =
+            String(
+                now.getMinutes()
+            ).padStart(2, "0");
+
+
+        const s =
+            String(
+                now.getSeconds()
+            ).padStart(2, "0");
+
+
+        const ampm =
+            h >= 12
+                ? "PM"
+                : "AM";
+
+
+        h =
+            h % 12;
+
+
+        h =
+            h
+                ? h
+                : 12;
+
+
+        const el =
+            document.getElementById(
+                "navTime"
+            );
+
+
+        if (el) {
+
+            el.textContent =
+                `${h}:${m}:${s} ${ampm}`;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       INITIAL LOAD
+       ========================================================= */
+
+    loadUserInfo();
+
+    updateClock();
+
+    setInterval(
+        updateClock,
+        1000
+    );
+
+</script>
+
+
+{% block custom_js %}{% endblock %}
+
+<!-- Global JARVIS Floating Button -->
+<style>
+
+.jarvis-fab {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(145deg, #00e5ff, #126dff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+  z-index: 999;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.jarvis-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.8);
+  color: #fff;
+}
+.jarvis-fab:focus-visible {
+  outline: 3px solid #00e5ff;
+  outline-offset: 3px;
+}
+
+</style>
+<a href="/student/jarvis" class="jarvis-fab" title="Open JARVIS AI" aria-label="Open JARVIS AI">
+  <i class="bi bi-robot"></i>
+</a>
+
+
+    <script src="/static/js/sidebar.js" defer></script>
+</body>
+</html>

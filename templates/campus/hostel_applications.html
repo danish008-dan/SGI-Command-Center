@@ -1,0 +1,49 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Hostel Applications{% endblock %}
+{% block page_title %}Hostel Applications & Allocations{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Student Applications</h5></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr><th>Student</th><th>Dept</th><th>Preferred Hostel</th><th>Date</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for a in applications %}
+                        <tr>
+                            <td>{{ a.student_name }} <small class="text-muted">({{ a.enrollment_no }})</small></td>
+                            <td>{{ a.department_name or '-' }}</td>
+                            <td>{{ a.preferred_hostel or '-' }}</td>
+                            <td>{{ a.requested_at }}</td>
+                            <td><span class="badge bg-{% if a.status == 'Pending' %}warning{% elif a.status == 'Allocated' %}success{% else %}danger{% endif %}">{{ a.status }}</span></td>
+                            <td>
+                                {% if a.status == 'Pending' %}
+                                <form action="/admin/api/campus/hostel/allocate" method="POST" class="d-flex gap-2 align-items-center">
+                                    <input type="hidden" name="application_id" value="{{ a.application_id }}">
+                                    <select name="bed_id" class="form-select form-select-sm" required style="width: 150px;">
+                                        <option value="">Select Bed</option>
+                                        {% for b in beds %}
+                                        <option value="{{ b.bed_id }}">{{ b.hostel_name }} - {{ b.room_number }} - {{ b.bed_number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-success">Allocate</button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">Processed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No applications.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

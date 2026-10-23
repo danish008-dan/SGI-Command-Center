@@ -1,0 +1,114 @@
+<!-- templates/student/assignments.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}Assignments{% endblock %}
+{% block page_title %}My Assignments{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-3">
+    <a href="/student/learning-center" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Learning Center
+    </a>
+</div>
+
+<div class="container-fluid">
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Assigned Work</h5></div>
+        <div class="card-body" id="assBody">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Submit Assignment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="uploadForm">
+            <input type="hidden" id="modalAssignmentId">
+            <p class="mb-2"><b>Title:</b> <span id="modalTitle"></span></p>
+            <p class="mb-3 text-muted small"><b>Description:</b> <span id="modalDesc"></span></p>
+            <div class="mb-3">
+                <label class="form-label">Upload File (PDF/DOCX only)</label>
+                <input type="file" class="form-control" name="file" accept=".pdf,.docx" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Submit Assignment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadAssignments() {
+    const res = await fetch("/student/api/assignments", { headers: { "Authorization": "Bearer " + getToken() } });
+    const data = await res.json();
+    const body = document.getElementById("assBody");
+
+    if(data.assignments.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center py-4">No assignments available for your enrolled courses.</p>';
+        return;
+    }
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Title</th><th>Subject</th><th>Due Date</th><th class="text-center">Status</th><th class="text-end">Action</th></tr></thead>
+        <tbody>`;
+
+    data.assignments.forEach(a => {
+        let badge = a.submission_status === 'Submitted' ? 'success' : 'warning';
+        html += `<tr>
+            <td><b>${a.title}</b><br><small class="text-muted">${a.teacher_name}</small></td>
+            <td>${a.subject_name}</td>
+            <td>${a.due_date || 'N/A'}</td>
+            <td class="text-center"><span class="badge bg-${badge}">${a.submission_status}</span></td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-primary" onclick="openUploadModal(${a.assignment_id}, '${a.title}', \`${a.description || ''}\`)">
+                    ${a.submission_status === 'Submitted' ? 'Resubmit' : 'Submit'}
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    body.innerHTML = html;
+}
+
+function openUploadModal(id, title, desc) {
+    document.getElementById("modalAssignmentId").value = id;
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalDesc").innerText = desc;
+    document.getElementById("uploadForm").reset(); // Clear previous file selection
+    new bootstrap.Modal(document.getElementById('uploadModal')).show();
+}
+
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const assignmentId = document.getElementById("modalAssignmentId").value;
+    const formData = new FormData(e.target);
+
+    const res = await fetch(`/student/api/assignments/${assignmentId}/submit`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken() },
+        body: formData
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    if(data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        loadAssignments(); // Reload table
+    }
+});
+
+loadAssignments();
+</script>
+{% endblock %}

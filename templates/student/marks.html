@@ -1,0 +1,79 @@
+<!-- templates/student/marks.html -->
+{% extends "student/student_layout.html" %}
+{% block title %}My Marks{% endblock %}
+{% block page_title %}Internal Marks Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="marksContent">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Loading Marks...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadMarks() {
+    const token = getToken();
+    if (!token) { window.location.href = "/login"; return; }
+
+    try {
+        const response = await fetch("/student/api/marks", { headers: { "Authorization": "Bearer " + token } });
+        if (response.status === 401) { window.location.href = "/login"; return; }
+        const data = await response.json();
+
+        const container = document.getElementById("marksContent");
+        let rows = "";
+
+        if (data.report.length === 0) {
+            rows = '<tr><td colspan="5" class="text-center text-muted py-4">No marks entered yet.</td></tr>';
+        } else {
+            data.report.forEach(row => {
+                const badgeColor = row.grade === 'F' ? 'danger' : (row.grade === 'A+' || row.grade === 'A' ? 'success' : 'primary');
+                rows += `
+                    <tr>
+                        <td>${row.subject_name}</td>
+                        <td>${row.exam_type}</td>
+                        <td class="text-center fw-bold">${row.obtained_marks} / ${row.maximum_marks}</td>
+                        <td class="text-center">${row.percentage}%</td>
+                        <td class="text-center"><span class="badge bg-${badgeColor}">${row.grade}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        container.innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-6 mx-auto" data-aos="zoom-in">
+                    <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                        <h5 class="text-muted">Overall Result</h5>
+                        <h1 class="display-4 fw-bold text-primary-custom">${data.overall_percentage}%</h1>
+                        <h3 class="mt-2"><span class="badge bg-success fs-5">Grade: ${data.overall_grade}</span></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card shadow-sm" data-aos="fade-up">
+                <div class="card-header bg-white py-3"><h5 class="mb-0">Subject-wise Marks</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr><th>Subject</th><th>Exam Type</th><th class="text-center">Marks Obtained</th><th class="text-center">Percentage</th><th class="text-center">Grade</th></tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        AOS.init();
+    } catch (error) {
+        document.getElementById("marksContent").innerHTML = `<div class="alert alert-danger">Error loading marks.</div>`;
+    }
+}
+loadMarks();
+</script>
+{% endblock %}

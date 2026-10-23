@@ -1,0 +1,88 @@
+{% extends "admin/admin_layout.html" %}
+{% block title %}Docs & Compliance{% endblock %}
+{% block page_title %}Document Management & Compliance{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- KPI Cards Row 1 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Total Documents</p>
+                <h3 class="cmd-stat-value">{{ stats.total }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Pending Review</p>
+                <h3 class="cmd-stat-value text-warning">{{ stats.pending }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Published</p>
+                <h3 class="cmd-stat-value text-success">{{ stats.published }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center">
+                <p class="cmd-stat-label">Expiring (30d)</p>
+                <h3 class="cmd-stat-value text-danger">{{ stats.expiring }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards Row 2 (More Interactive) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-info">
+                <p class="cmd-stat-label">Compliance Tasks</p>
+                <h3 class="cmd-stat-value text-info">5</h3>
+                <a href="/admin/docs/compliance" class="small text-muted">View Register</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-primary">
+                <p class="cmd-stat-label">Scheduled Meetings</p>
+                <h3 class="cmd-stat-value text-primary">2</h3>
+                <a href="/admin/docs/meetings" class="small text-muted">View Meetings</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-warning">
+                <p class="cmd-stat-label">Open Action Items</p>
+                <h3 class="cmd-stat-value text-warning">3</h3>
+                <a href="/admin/docs/action-items" class="small text-muted">Track Actions</a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card cmd-center-card p-3 text-center border-success">
+                <p class="cmd-stat-label">Approved Minutes</p>
+                <h3 class="cmd-stat-value text-success">2</h3>
+                <span class="small text-muted">This Quarter</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Recent Document Uploads</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Document Title</th><th>Category</th><th>Status</th><th>Uploaded By</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Anti-Ragging Policy 2024</td><td>Policies</td><td><span class="badge bg-success">Published</span></td><td>Admin</td><td>2024-10-01</td></tr>
+                        <tr><td>AICTE Approval Letter 2023</td><td>AICTE</td><td><span class="badge bg-success">Published</span></td><td>Admin</td><td>2024-09-15</td></tr>
+                        <tr><td>HR Appointment Policy</td><td>HR</td><td><span class="badge bg-secondary">Draft</span></td><td>Admin</td><td>2024-10-10</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

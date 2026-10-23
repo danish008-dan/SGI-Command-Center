@@ -1,0 +1,200 @@
+<!-- templates/admin/results.html -->
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Result Management{% endblock %}
+{% block page_title %}Result Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Generate/Publish Card -->
+    <div class="card shadow-sm mb-4" data-aos="fade-down">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-3">Generate & Publish Results</h5>
+                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#flowModal">
+                    <i class="bi bi-info-circle"></i> Result Workflow
+                </button>
+            </div>
+            <div class="alert alert-danger d-none" id="resAlert" role="alert"></div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Select Semester</label>
+                    <select class="form-select" id="semSelect">
+                        {% for i in range(1, 9) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" id="genBtn">Generate (Draft)</button>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-warning w-100" id="submitApprBtn">Submit to Principal</button>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" id="pubBtn">Publish</button>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-danger w-100" id="retractBtn">Retract (Correct)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Table -->
+    <div class="card shadow-sm" data-aos="fade-up">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Student Results (Semester <span id="tableSem">1</span>)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student Name</th>
+                            <th class="text-center">Percentage</th>
+                            <th class="text-center">SGPA</th>
+                            <th class="text-center">Grade</th>
+                            <th class="text-center">Approval</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workflow Info Modal -->
+<div class="modal fade" id="flowModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Result Management Workflow</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Here is the complete step-by-step process of how Results are managed in SGI Command Center:</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>1. Marks Entry (Teacher):</strong> Teachers enter marks for students. Marks are saved as 'Draft' until submitted for verification.</li>
+                    <li class="list-group-item"><strong>2. Marks Verification (HOD):</strong> HOD reviews the submitted marks and either 'Verifies' them or 'Returns' them for correction. Only 'Verified' marks are used for result calculation.</li>
+                    <li class="list-group-item"><strong>3. Generate Draft (Admin):</strong> The Admin selects a semester and clicks 'Generate (Draft)'. The system calculates SGPA, CGPA, and Grades based on verified marks. Results are saved as 'Draft'.</li>
+                    <li class="list-group-item"><strong>4. Submit to Principal (Admin):</strong> The Admin clicks 'Submit to Principal'. The results status changes to 'Pending Principal'. The Principal must now review and approve.</li>
+                    <li class="list-group-item"><strong>5. Principal Approval:</strong> The Principal logs in, reviews the pending results, and clicks 'Approve'. The results status changes to 'Approved'.</li>
+                    <li class="list-group-item"><strong>6. Publish (Admin):</strong> The Admin clicks 'Publish'. The results status becomes 'Published' and students can now view their results on their portal.</li>
+                    <li class="list-group-item"><strong>7. Retraction (Admin):</strong> If a correction is needed after publishing, the Admin clicks 'Retract (Correct)'. The result goes back to 'Draft' status, and the approval process restarts.</li>
+                    <li class="list-group-item"><strong>8. Revaluation:</strong> If a student requests a revaluation, the Admin updates the marks. The old result is saved in history, and the new result goes back to 'Draft' for re-approval.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+function getToken() { return localStorage.getItem("access_token"); }
+
+async function loadResults() {
+    const sem = document.getElementById("semSelect").value;
+    document.getElementById("tableSem").textContent = sem;
+    const tbody = document.getElementById("resTableBody");
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>';
+
+    try {
+        const res = await fetch(`/admin/api/results?semester=${sem}`, { headers: { "Authorization": "Bearer " + getToken() }});
+        const data = await res.json();
+
+        if(data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No results found. Generate them first.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = "";
+        data.forEach((r, index) => {
+            const badgeColor = r.grade === 'F' ? 'danger' : (r.percentage > 85 ? 'success' : 'primary');
+            let apprBadge = 'bg-secondary';
+            if (r.approval_status === 'Approved') apprBadge = 'bg-success';
+            else if (r.approval_status === 'Pending Principal') apprBadge = 'bg-warning text-dark';
+            else if (r.approval_status === 'Rejected') apprBadge = 'bg-danger';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}. ${r.full_name}</td>
+                    <td class="text-center fw-bold">${r.percentage}%</td>
+                    <td class="text-center">${r.sgpa}</td>
+                    <td class="text-center"><span class="badge bg-${badgeColor}">${r.grade}</span></td>
+                    <td class="text-center"><span class="badge ${apprBadge}">${r.approval_status || 'Draft'}</span></td>
+                </tr>
+            `;
+        });
+    } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center">Error loading data.</td></tr>'; }
+}
+
+document.getElementById("semSelect").addEventListener("change", loadResults);
+
+document.getElementById("genBtn").addEventListener("click", async function() {
+    if(!confirm("Generate results? This will overwrite existing drafts.")) return;
+    const sem = document.getElementById("semSelect").value;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+
+    const formData = new URLSearchParams();
+    formData.append("semester", sem);
+
+    const res = await fetch("/admin/api/results/generate", { method: "POST", body: formData, headers: { "Authorization": "Bearer " + getToken() }});
+    const data = await res.json();
+    alert(data.message);
+    this.innerHTML = 'Generate (Draft)';
+    loadResults();
+});
+
+document.getElementById("submitApprBtn").addEventListener("click", async function() {
+    if(!confirm("Submit these results to Principal for approval?")) return;
+    const sem = document.getElementById("semSelect").value;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Submitting...';
+
+    const formData = new URLSearchParams();
+    formData.append("semester", sem);
+
+    const res = await fetch("/admin/api/results/submit-approval", { method: "POST", body: formData, headers: { "Authorization": "Bearer " + getToken() }});
+    const data = await res.json();
+    alert(data.message);
+    this.innerHTML = 'Submit to Principal';
+    loadResults();
+});
+
+document.getElementById("pubBtn").addEventListener("click", async function() {
+    if(!confirm("Publish results? Students will be able to see them.")) return;
+    const sem = document.getElementById("semSelect").value;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Publishing...';
+
+    const formData = new URLSearchParams();
+    formData.append("semester", sem);
+
+    const res = await fetch("/admin/api/results/publish", { method: "POST", body: formData, headers: { "Authorization": "Bearer " + getToken() }});
+    const data = await res.json();
+    alert(data.message);
+    this.innerHTML = 'Publish';
+});
+
+document.getElementById("retractBtn").addEventListener("click", async function() {
+    if(!confirm("Retracting will unpublish results for correction. Continue?")) return;
+    const sem = document.getElementById("semSelect").value;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Retracting...';
+
+    const formData = new URLSearchParams();
+    formData.append("semester", sem);
+
+    const res = await fetch("/admin/api/results/retract", { method: "POST", body: formData, headers: { "Authorization": "Bearer " + getToken() }});
+    const data = await res.json();
+    alert(data.message);
+    this.innerHTML = 'Retract (Correct)';
+    loadResults();
+});
+
+loadResults(); // Load on start
+</script>
+{% endblock %}
